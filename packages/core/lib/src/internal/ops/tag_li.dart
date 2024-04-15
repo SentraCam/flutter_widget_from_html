@@ -16,6 +16,8 @@ const kCssListStyleTypeAlphaLower = 'lower-alpha';
 const kCssListStyleTypeAlphaUpper = 'upper-alpha';
 const kCssListStyleTypeAlphaLatinLower = 'lower-latin';
 const kCssListStyleTypeAlphaLatinUpper = 'upper-latin';
+const kCssListStyleTypeChecked = 'checked';
+const kCssListStyleTypeUnchecked = 'unchecked';
 const kCssListStyleTypeCircle = 'circle';
 const kCssListStyleTypeDecimal = 'decimal';
 const kCssListStyleTypeDisc = 'disc';
@@ -129,6 +131,7 @@ String? _listStyleTypeFromAttributeType(String type) {
 
 extension on BuildTree {
   String? get itemStyleType =>
+      element.attributes['data-list'] ??
       getStyle(kCssListStyleType)?.term ??
       _listStyleTypeFromAttributeType(
         element.attributes[kAttributeLiType] ?? '',
@@ -141,7 +144,9 @@ extension on BuildTree {
       setNonInherited<_TagLiListData>(_parse());
 
   String get listStyleType =>
-      getStyle(kCssListStyleType)?.term ?? kCssListStyleTypeDisc;
+      element.attributes['data-list'] ??
+      getStyle(kCssListStyleType)?.term ??
+      kCssListStyleTypeDisc;
 
   int increaseListDepth() => setNonInherited<_TagLiListData>(
         listData.copyWith(dataDepth: listData.dataDepth + 1),

@@ -376,6 +376,10 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
         return null;
       case kCssListStyleTypeSquare:
         return HtmlListMarker.square(textStyle);
+      case kCssListStyleTypeChecked:
+        return HtmlListMarker.checked(textStyle);
+      case kCssListStyleTypeUnchecked:
+        return HtmlListMarker.unchecked(textStyle);
       case kCssListStyleTypeDisc:
       default:
         return HtmlListMarker.disc(textStyle);

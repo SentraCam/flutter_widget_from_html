@@ -358,6 +358,10 @@ class Explainer {
         return '[HtmlListMarker.disclosureOpen]';
       case HtmlListMarkerType.square:
         return '[HtmlListMarker.square]';
+      case HtmlListMarkerType.checked:
+        return '[HtmlListMarker.checked]';
+      case HtmlListMarkerType.unchecked:
+        return '[HtmlListMarker.unchecked]';
     }
   }
 

@@ -29,6 +29,9 @@ const kHtml = '''
 </figure>
 
 <h4>Lists:</h4>
+
+<div class="ql-editor read-mode"><p>Test message with checklist</p><ol><li data-list="unchecked"><span class="ql-ui" contenteditable="false"></span>Testing</li><li data-list="checked"><span class="ql-ui" contenteditable="false"></span>123</li></ol><p>Thanks,</p><p><br></p><h3><strong>SentraCam Support</strong></h3><p><a href="mailto:support@sentracam.com" rel="noopener noreferrer">support@sentracam.com</a></p><p>888-226-0007</p><p><br></p><p><a href="https://www.sentracam.com" rel="noopener noreferrer"><img src="/files/hZFGhpt.png"></a></p></div>
+
 <table border="1" cellpadding="4">
   <tr>
     <th>&lt;UL&gt; unordered list</th>

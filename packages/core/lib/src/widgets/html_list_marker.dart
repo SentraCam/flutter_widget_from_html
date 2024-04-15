@@ -2,6 +2,8 @@
 // ignore: unnecessary_import
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' as mui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -31,6 +33,14 @@ class HtmlListMarker extends LeafRenderObjectWidget {
   /// Creates a square marker.
   const HtmlListMarker.square(this.textStyle, {super.key})
       : markerType = HtmlListMarkerType.square;
+
+  /// Creates a checkedmark marker.
+  const HtmlListMarker.checked(this.textStyle, {super.key})
+      : markerType = HtmlListMarkerType.checked;
+
+  /// Creates a uncheckedmark marker.
+  const HtmlListMarker.unchecked(this.textStyle, {super.key})
+      : markerType = HtmlListMarkerType.unchecked;
 
   @override
   RenderObject createRenderObject(BuildContext _) =>
@@ -182,7 +192,49 @@ class _ListMarkerRenderObject extends RenderBox {
           Paint()..color = color,
         );
         break;
+
+      case HtmlListMarkerType.checked:
+        const icon = mui.Icons.check_box_outlined;
+        _addIcon(
+            icon: icon,
+            color: color,
+            fontSize: fontSize,
+            canvas: canvas,
+            offset: offset);
+        break;
+
+      case HtmlListMarkerType.unchecked:
+        const icon = mui.Icons.check_box_outline_blank;
+        _addIcon(
+            icon: icon,
+            color: color,
+            fontSize: fontSize,
+            canvas: canvas,
+            offset: offset);
+        break;
     }
+  }
+
+  void _addIcon(
+      {required IconData icon,
+      required Color color,
+      required double fontSize,
+      required Canvas canvas,
+      required Offset offset}) {
+    final TextPainter textPainter =
+        TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(icon.codePoint),
+      style: TextStyle(
+        color: color,
+        fontSize: fontSize,
+        fontFamily: icon.fontFamily,
+        package:
+            icon.fontPackage, // This line is mandatory for external icon packs
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, offset + const Offset(0, 2));
   }
 
   @override
@@ -207,4 +259,10 @@ enum HtmlListMarkerType {
 
   /// The square marker type.
   square,
+
+  /// The checkedmark marker type.
+  checked,
+
+  /// The uncheckedmark marker type.
+  unchecked,
 }
