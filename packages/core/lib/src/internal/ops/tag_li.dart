@@ -130,10 +130,13 @@ String? _listStyleTypeFromAttributeType(String type) {
 }
 
 extension on BuildTree {
-  String? get _dataListType => element.attributes['data-list'] != null &&
-          (element.attributes['data-list'] == 'checked' ||
+  String? get _dataListType => element.attributes['data-list'] != null
+      ? (element.attributes['data-list'] == 'checked' ||
               element.attributes['data-list'] == 'unchecked')
-      ? element.attributes['data-list']
+          ? element.attributes['data-list']
+          : element.attributes['data-list'] == 'bullet'
+              ? 'disc'
+              : null
       : null;
 
   String? get itemStyleType =>
