@@ -130,8 +130,14 @@ String? _listStyleTypeFromAttributeType(String type) {
 }
 
 extension on BuildTree {
+  String? get _dataListType => element.attributes['data-list'] != null &&
+          (element.attributes['data-list'] == 'checked' ||
+              element.attributes['data-list'] == 'unchecked')
+      ? element.attributes['data-list']
+      : null;
+
   String? get itemStyleType =>
-      element.attributes['data-list'] ??
+      _dataListType ??
       getStyle(kCssListStyleType)?.term ??
       _listStyleTypeFromAttributeType(
         element.attributes[kAttributeLiType] ?? '',
@@ -144,7 +150,7 @@ extension on BuildTree {
       setNonInherited<_TagLiListData>(_parse());
 
   String get listStyleType =>
-      element.attributes['data-list'] ??
+      _dataListType ??
       getStyle(kCssListStyleType)?.term ??
       kCssListStyleTypeDisc;
 

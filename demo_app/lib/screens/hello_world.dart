@@ -30,8 +30,12 @@ const kHtml = '''
 
 <h4>Lists:</h4>
 
-<div class="ql-editor read-mode"><p>Test message with checklist</p><ol><li data-list="unchecked"><span class="ql-ui" contenteditable="false"></span>Testing</li><li data-list="checked"><span class="ql-ui" contenteditable="false"></span>123</li></ol><p>Thanks,</p><p><br></p><h3><strong>SentraCam Support</strong></h3><p><a href="mailto:support@sentracam.com" rel="noopener noreferrer">support@sentracam.com</a></p><p>888-226-0007</p><p><br></p><p><a href="https://www.sentracam.com" rel="noopener noreferrer"><img src="/files/hZFGhpt.png"></a></p></div>
+<ol>
+<li data-list="ordered">Ordered list</li>
+<li data-list="ordered">item 2</li>
+</ol>
 
+<p><br></p><ol><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span>Unordered</li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span>item 3</li></ol><p><br></p><ol><li data-list="checked"><span class="ql-ui" contenteditable="false"></span>Checked</li><li data-list="unchecked"><span class="ql-ui" contenteditable="false"></span><em>Italized Unchecked</em></li></ol><p><br></p><p><strong>Bold item</strong></p>
 <table border="1" cellpadding="4">
   <tr>
     <th>&lt;UL&gt; unordered list</th>

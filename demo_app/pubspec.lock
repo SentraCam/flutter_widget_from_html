@@ -283,14 +283,14 @@ packages:
       path: "../packages/enhanced"
       relative: true
     source: path
-    version: "0.14.11"
+    version: "0.14.12"
   flutter_widget_from_html_core:
     dependency: "direct main"
     description:
       path: "../packages/core"
       relative: true
     source: path
-    version: "0.14.11"
+    version: "0.14.12"
   frontend_server_client:
     dependency: transitive
     description:
