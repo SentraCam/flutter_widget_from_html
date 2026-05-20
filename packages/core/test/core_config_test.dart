@@ -522,7 +522,7 @@ void main() {
         _OnTapUrlApp(
           href: href,
           onTapCallbackResults: onTapCallbackResults,
-          onTapUrl: (_) async => false,
+          onTapUrl: (_) => false,
         ),
       );
       await tester.pumpAndSettle();
@@ -539,7 +539,7 @@ void main() {
         _OnTapUrlApp(
           href: href,
           onTapCallbackResults: onTapCallbackResults,
-          onTapUrl: (_) async => true,
+          onTapUrl: (_) => true,
         ),
       );
       await tester.pumpAndSettle();
@@ -642,6 +642,35 @@ void main() {
         reason: '$explained has too many `CssBlock`s',
       );
     });
+
+    testWidgets('renders empty string', (WidgetTester tester) async {
+      // https://github.com/daohoangson/flutter_widget_from_html/issues/1320
+      final e = await explain(tester, RenderMode.sliverList, html: '');
+      expect(e, contains('└SizedBox.shrink'));
+    });
+
+    testWidgets('renders empty string (async)', (WidgetTester tester) async {
+      await explain(tester, RenderMode.sliverList, buildAsync: true, html: '');
+      await tester.runAsync(() => Future.delayed(const Duration(seconds: 1)));
+      await tester.pump();
+
+      final success = await helper.explainWithoutPumping(useExplainer: false);
+      expect(success, contains('└SizedBox.shrink'));
+    });
+
+    testWidgets('renders single space', (WidgetTester tester) async {
+      final e = await explain(tester, RenderMode.sliverList, html: ' ');
+      expect(e, contains('└SizedBox.shrink'));
+    });
+
+    testWidgets('renders single space (async)', (WidgetTester tester) async {
+      await explain(tester, RenderMode.sliverList, buildAsync: true, html: ' ');
+      await tester.runAsync(() => Future.delayed(const Duration(seconds: 1)));
+      await tester.pump();
+
+      final success = await helper.explainWithoutPumping(useExplainer: false);
+      expect(success, contains('└SizedBox.shrink'));
+    });
   });
 
   group('textStyle', () {
@@ -679,7 +708,7 @@ class _OnErrorBuilderFactory extends WidgetFactory {
 
 class _OnTapUrlApp extends StatelessWidget {
   final String href;
-  final FutureOr<bool> Function(String)? onTapUrl;
+  final FutureOr<bool> Function(String url)? onTapUrl;
   final List? onTapCallbackResults;
 
   const _OnTapUrlApp({
@@ -689,7 +718,7 @@ class _OnTapUrlApp extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext _) => MaterialApp(
+  Widget build(BuildContext context) => MaterialApp(
         home: Scaffold(
           body: HtmlWidget(
             '<a href="$href">Tap me</a>',

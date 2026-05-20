@@ -1,3 +1,43 @@
+## 0.17.2
+
+- Add `text-emphasis` / `text-emphasis-style` support (#1561, authored by @CaptainDario)
+- Add CSS `text-decoration-style: wavy` support (#1559, authored by @CaptainDario)
+- Enhanced CSS `list-style-type` (#1558, authored by @CaptainDario)
+- Fix dart2wasm compilation error in Flutter 3.38+ (#1529, authored by @lemz90)
+- Fix `customStylesBuilder` text-decoration not overriding anchor underline (#1548)
+- Fix border-radius with background-color for inline elements (#1569)
+
+## 0.17.0
+
+- Requires Flutter 3.32 (#1475)
+- Fix `text-align: center` inside tables (#1451)
+
+## 0.16.0
+
+- Requires Flutter 3.22 (#1403)
+- Add support for CSS `gap` (#1403)
+
+## 0.15.2
+
+- Add support for Flutter 3.24 (#1308)
+- Fix `HtmlFlex` incompatibility with Flutter@master (#1308)
+- Fix unnamed function parameters (#1309, authored by hassony105)
+- Fix RenderSliver mode error when html input is empty (#1321, authored by vanvixi)
+
+## 0.15.1
+
+- Requires Flutter 3.10 (#1250)
+- Add support for `currentcolor` (#1240)
+- Fix zero size image (#1266)
+
+## 0.14.12
+
+- Expand roman support to 3999 (#1154, authored by @ngthailam)
+- Add support for `text-shadow` (#1158, also by @ngthailam 🎉)
+- Improve support for `display: flex` (#1229, #1235)
+- Fix bug cannot select text of nested HtmlWidget inside list view render mode (#1231)
+- Fix white spaces are removed in PRE tag (#1233)
+
 ## 0.14.11
 
 - Fix infinite `TextStyle.height` (#1147)

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 import 'fallback.dart'
@@ -20,12 +22,8 @@ class WebView extends StatefulWidget {
   /// Flutter Web is not supported.
   final bool autoResize;
 
-  /// The auto resize intevals.
-  ///
-  /// By default, resizing will be attempted three times
-  /// - On page load
-  /// - After 1s
-  /// - After another 2s
+  /// A legacy field that is no longer used.
+  @Deprecated('No longer used.')
   final List<Duration> autoResizeIntervals;
 
   /// {@template web_view.debuggingEnabled}
@@ -37,13 +35,18 @@ class WebView extends StatefulWidget {
   /// {@endtemplate}
   final bool debuggingEnabled;
 
+  /// {@template web_view.gestureRecognizers}
+  /// Specifies which gestures should be consumed by the web view.
+  /// {@endtemplate}
+  final Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers;
+
   /// The callback to handle navigation request.
   ///
   /// This will be triggered on generated navigation within the web view.
   /// Returning `true` will stop web view from navigating.
   ///
   /// Flutter Web is not supported.
-  final bool Function(String)? interceptNavigationRequest;
+  final bool Function(String value)? interceptNavigationRequest;
 
   /// {@template web_view.js}
   /// Controls whether to enable JavaScript.
@@ -78,11 +81,13 @@ class WebView extends StatefulWidget {
   /// {@endtemplate}
   final void Function(Widget child)? onAndroidShowCustomWidget;
 
+  /// {@template web_view.unsupportedWorkaroundForIssue37}
   /// Controls whether or not to apply workaround for
   /// [video continue playing after locking the phone or navigate to another screen](https://github.com/daohoangson/flutter_widget_from_html/issues/37)
   /// issue.
   ///
   /// Default: `true`.
+  /// {@endtemplate}
   final bool unsupportedWorkaroundForIssue37;
 
   /// {@template web_view.userAgent}
@@ -92,17 +97,36 @@ class WebView extends StatefulWidget {
   /// {@endtemplate}
   final String? userAgent;
 
+  /// {@template web_view.allow}
+  /// The `allow` attribute for the iframe's permissions policy.
+  ///
+  /// For example: `'accelerometer; autoplay; fullscreen'`.
+  ///
+  /// Only used on Flutter Web.
+  /// {@endtemplate}
+  final String? allow;
+
+  /// {@template web_view.allowFullscreen}
+  /// Controls whether fullscreen is allowed.
+  ///
+  /// When `true`, the `allowfullscreen` attribute is set on the iframe.
+  ///
+  /// Only used on Flutter Web.
+  ///
+  /// Default: `false`.
+  /// {@endtemplate}
+  final bool allowFullscreen;
+
   /// Creates a web view.
   const WebView(
     this.url, {
+    this.allow,
+    this.allowFullscreen = false,
     required this.aspectRatio,
+    @Deprecated('No longer used.') this.autoResizeIntervals = const [],
     bool? autoResize,
-    this.autoResizeIntervals = const [
-      Duration.zero,
-      Duration(seconds: 1),
-      Duration(seconds: 2),
-    ],
     this.debuggingEnabled = false,
+    this.gestureRecognizers = const <Factory<OneSequenceGestureRecognizer>>{},
     this.interceptNavigationRequest,
     this.js = true,
     this.mediaPlaybackAlwaysAllow = false,
@@ -111,9 +135,7 @@ class WebView extends StatefulWidget {
     this.unsupportedWorkaroundForIssue37 = true,
     this.userAgent,
     super.key,
-  }) :
-        // ignore: avoid_bool_literals_in_conditional_expressions
-        autoResize = js ? (autoResize ?? js) : false;
+  }) : autoResize = js && (autoResize ?? js);
 
   @override
   State<WebView> createState() => WebViewState();

@@ -1,3 +1,20 @@
+## 0.16.1
+
+- Add support for flutter_widget_from_html_core@0.17.0 (#1475)
+
+## 0.16.0
+
+- Requires Flutter 3.10 (#1396)
+- Add support for flutter_widget_from_html_core@0.16.0 (#1405)
+
+## 0.8.3
+
+- Fix unnamed function parameters (#1309, authored by hassony105)
+
+## 0.8.2
+
+- Add support for flutter_widget_from_html_core@0.15.1 (#1269)
+
 ## 0.8.1
 
 - Fix SVG does not respect width/height attributes (#1144)

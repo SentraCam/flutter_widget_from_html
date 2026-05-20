@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
@@ -69,6 +70,30 @@ Future<void> main() async {
         ),
       ),
     );
+  });
+
+  testWidgets('renders centered text within list item', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 200,
+            child: HtmlWidget(
+              '<ol><li style="text-align: center">data 1</li></ol>',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final itemRect = tester.getRect(find.byType(HtmlListItem));
+    final paragraph = tester.renderObject<RenderParagraph>(findText('data 1'));
+    final textRect = tester.getRect(findText('data 1'));
+
+    expect(itemRect.width, greaterThan(100));
+    expect(paragraph.textAlign, equals(TextAlign.center));
+    expect(textRect.center.dx, closeTo(itemRect.center.dx, .1));
   });
 
   testWidgets('renders nested list', (WidgetTester tester) async {
@@ -319,6 +344,19 @@ Future<void> main() async {
         const html = '<ul style="list-style-type: none"><li>Foo</li></ul>';
         final explained = await explain(tester, html);
         expect(explained, equals(padding('[RichText:(:Foo)]')));
+      });
+
+      testWidgets('renders string literal', (WidgetTester tester) async {
+        // Notice the escaped single quotes wrapping the style attribute!
+        const html = '<ul style=\'list-style-type: "★"\'><li>Foo</li></ul>';
+        final explained = await explain(tester, html);
+        expect(explained, equals(padding(item('★', 'Foo'))));
+      });
+
+      testWidgets('renders string literal (single quotes)', (tester) async {
+        const html = "<ul style=\"list-style-type: '👉'\"><li>Foo</li></ul>";
+        final explained = await explain(tester, html);
+        expect(explained, equals(padding(item('👉', 'Foo'))));
       });
 
       testWidgets('renders square', (WidgetTester tester) async {
@@ -602,6 +640,59 @@ Future<void> main() async {
           );
         });
       });
+      testWidgets('renders cjk-ideographic', (WidgetTester tester) async {
+        const html =
+            '<ol style="list-style-type: cjk-ideographic"><li>x</li><li>x</li><li>x</li></ol>';
+        final explained = await explain(tester, html);
+        expect(
+          explained,
+          equals(
+            padding(
+              list([
+                item('一、', 'x'),
+                item('二、', 'x'),
+                item('三、', 'x'),
+              ]),
+            ),
+          ),
+        );
+      });
+
+      testWidgets('renders lower-greek', (WidgetTester tester) async {
+        const html =
+            '<ol style="list-style-type: lower-greek"><li>x</li><li>x</li><li>x</li></ol>';
+        final explained = await explain(tester, html);
+        expect(
+          explained,
+          equals(
+            padding(
+              list([
+                item('α.', 'x'),
+                item('β.', 'x'),
+                item('γ.', 'x'),
+              ]),
+            ),
+          ),
+        );
+      });
+
+      testWidgets('renders binary', (WidgetTester tester) async {
+        const html =
+            '<ol style="list-style-type: binary"><li>x</li><li>x</li><li>x</li></ol>';
+        final explained = await explain(tester, html);
+        expect(
+          explained,
+          equals(
+            padding(
+              list([
+                item('1.', 'x'),
+                item('10.', 'x'),
+                item('11.', 'x'),
+              ]),
+            ),
+          ),
+        );
+      });
     });
 
     group('padding-inline-start', () {
@@ -810,6 +901,31 @@ Future<void> main() async {
       );
     });
 
+    testWidgets('computeDryLayout with textAlign', (tester) async {
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 100,
+              child: HtmlListItem(
+                key: key,
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.ltr,
+                child: const SizedBox(width: 50, height: 5),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        key.renderBox.getDryLayout(const BoxConstraints(maxWidth: 100)),
+        equals(const Size(100, 5)),
+      );
+    });
+
     testWidgets('computeDryLayout with no op marker', (tester) async {
       final key = GlobalKey();
       await tester.pumpWidget(
@@ -859,6 +975,30 @@ Future<void> main() async {
         key.renderBox.getDryLayout(const BoxConstraints()),
         equals(Size.zero),
       );
+    });
+
+    testWidgets('computeDryBaseline', (tester) async {
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HtmlListItem(
+              key: key,
+              marker: const Text('1.'),
+              textDirection: TextDirection.ltr,
+              child: const Text('Hello'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final renderBox = key.renderBox;
+      final baseline = renderBox.getDryBaseline(
+        renderBox.constraints,
+        TextBaseline.alphabetic,
+      );
+      expect(baseline, isNotNull);
     });
 
     testWidgets('computeIntrinsic', (tester) async {
@@ -1000,14 +1140,45 @@ Future<void> main() async {
         '<ul style="color: #f00"><li>Foo</li></ul>',
         useExplainer: false,
       );
-      expect(disc, contains('Color(0xffff0000)'));
+
+      expect(disc,
+          contains('alpha: 1.0000, red: 1.0000, green: 0.0000, blue: 0.0000'));
 
       final circle = await explain(
         tester,
         '<ul style="color: #0f0"><li>Foo</li></ul>',
         useExplainer: false,
       );
-      expect(circle, contains('Color(0xff00ff00)'));
+
+      expect(circle,
+          contains('alpha: 1.0000, red: 0.0000, green: 1.0000, blue: 0.0000'));
+    });
+
+    testWidgets('computeDryBaseline', (tester) async {
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HtmlListItem(
+              marker: HtmlListMarker(
+                key: key,
+                markerType: HtmlListMarkerType.disc,
+                textStyle: const TextStyle(fontSize: 14),
+              ),
+              textDirection: TextDirection.ltr,
+              child: const Text('Hello'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final renderBox = key.renderBox;
+      final baseline = renderBox.getDryBaseline(
+        renderBox.constraints,
+        TextBaseline.alphabetic,
+      );
+      expect(baseline, isNotNull);
     });
   });
 }
@@ -1018,7 +1189,7 @@ class _Golden extends StatelessWidget {
   const _Golden(this.contents);
 
   @override
-  Widget build(BuildContext _) => Scaffold(
+  Widget build(BuildContext context) => Scaffold(
         body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(

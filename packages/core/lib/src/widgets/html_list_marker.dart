@@ -43,7 +43,7 @@ class HtmlListMarker extends LeafRenderObjectWidget {
       : markerType = HtmlListMarkerType.unchecked;
 
   @override
-  RenderObject createRenderObject(BuildContext _) =>
+  RenderObject createRenderObject(BuildContext context) =>
       _ListMarkerRenderObject(markerType, textStyle);
 
   @override
@@ -54,7 +54,7 @@ class HtmlListMarker extends LeafRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext _, RenderObject renderObject) {
+  void updateRenderObject(BuildContext context, RenderObject renderObject) {
     (renderObject as _ListMarkerRenderObject)
       ..markerType = markerType
       ..textStyle = textStyle;
@@ -65,7 +65,7 @@ class _ListMarkerRenderObject extends RenderBox {
   _ListMarkerRenderObject(this._markerType, this._textStyle);
 
   HtmlListMarkerType _markerType;
-  // ignore: avoid_setters_without_getters
+  HtmlListMarkerType get markerType => _markerType;
   set markerType(HtmlListMarkerType v) {
     if (v == _markerType) {
       return;
@@ -96,7 +96,7 @@ class _ListMarkerRenderObject extends RenderBox {
   }
 
   TextStyle _textStyle;
-  // ignore: avoid_setters_without_getters
+  TextStyle get textStyle => _textStyle;
   set textStyle(TextStyle v) {
     if (v == _textStyle) {
       return;
@@ -109,6 +109,13 @@ class _ListMarkerRenderObject extends RenderBox {
 
   @override
   double computeDistanceToActualBaseline(TextBaseline baseline) =>
+      _textPainter.computeDistanceToActualBaseline(baseline);
+
+  @override
+  double? computeDryBaseline(
+    BoxConstraints constraints,
+    TextBaseline baseline,
+  ) =>
       _textPainter.computeDistanceToActualBaseline(baseline);
 
   @override
@@ -148,14 +155,12 @@ class _ListMarkerRenderObject extends RenderBox {
             ..strokeWidth = 1
             ..style = PaintingStyle.stroke,
         );
-        break;
       case HtmlListMarkerType.disc:
         canvas.drawCircle(
           center,
           radius,
           Paint()..color = color,
         );
-        break;
       case HtmlListMarkerType.disclosureClosed:
         final d = radius * 2;
         canvas
@@ -170,7 +175,6 @@ class _ListMarkerRenderObject extends RenderBox {
               ..style = PaintingStyle.fill,
           )
           ..restore();
-        break;
       case HtmlListMarkerType.disclosureOpen:
         final d = radius * 2;
         canvas
@@ -185,7 +189,6 @@ class _ListMarkerRenderObject extends RenderBox {
               ..style = PaintingStyle.fill,
           )
           ..restore();
-        break;
       case HtmlListMarkerType.square:
         canvas.drawRect(
           Rect.fromCircle(center: center, radius: radius * .8),

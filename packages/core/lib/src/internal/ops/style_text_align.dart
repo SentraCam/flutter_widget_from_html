@@ -23,7 +23,7 @@ extension StyleTextAlign on WidgetFactory {
         priority: Early.cssTextAlign,
       );
 
-  static Widget _center(BuildContext _, Widget child) =>
+  static Widget _center(BuildContext context, Widget child) =>
       Center(heightFactor: 1.0, child: child);
 
   static BuildTree _onParsed(BuildTree tree) {
@@ -67,22 +67,16 @@ extension on BuildTree {
       case kCssTextAlignMozCenter:
       case kCssTextAlignWebkitCenter:
         textAlign = TextAlign.center;
-        break;
       case kCssTextAlignEnd:
         textAlign = TextAlign.end;
-        break;
       case kCssTextAlignJustify:
         textAlign = TextAlign.justify;
-        break;
       case kCssTextAlignLeft:
         textAlign = TextAlign.left;
-        break;
       case kCssTextAlignRight:
         textAlign = TextAlign.right;
-        break;
       case kCssTextAlignStart:
         textAlign = TextAlign.start;
-        break;
     }
 
     return _StyleTextAlignData(term, textAlign);

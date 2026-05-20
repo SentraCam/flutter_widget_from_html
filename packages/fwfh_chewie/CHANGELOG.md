@@ -1,3 +1,17 @@
+## 0.16.1
+
+- Add support for flutter_widget_from_html_core@0.17.0 (#1475)
+- Add support for video_player_platform_interface@6.3.0 (#1475)
+
+## 0.16.0
+
+- Requires Flutter 3.10 (#1396)
+- Add support for flutter_widget_from_html_core@0.16.0 (#1405)
+
+## 0.14.8
+
+- Add support for flutter_widget_from_html_core@0.15.1 (#1269)
+
 ## 0.14.7
 
 - Render video player on macOS (#1100)

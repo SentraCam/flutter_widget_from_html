@@ -1,3 +1,65 @@
+## 0.17.2
+
+- Add `text-emphasis` / `text-emphasis-style` support (#1561, authored by @CaptainDario)
+- Add CSS `text-decoration-style: wavy` support (#1559, authored by @CaptainDario)
+- Enhanced CSS `list-style-type` (#1558, authored by @CaptainDario)
+- Forward `allowfullscreen` and `allow` iframe attributes to WebView (#1566)
+- Fix dart2wasm compilation error in Flutter 3.38+ (#1529, authored by @lemz90)
+- Fix `customStylesBuilder` text-decoration not overriding anchor underline (#1548)
+- Fix border-radius with background-color for inline elements (#1569)
+
+## 0.17.1
+
+- Add support for Flutter 3.35 (#1498)
+- Add support for webview_flutter_android@4.8 (#1498)
+- Add support for `data-src` attribute in IFRAME (#1497)
+
+## 0.17.0
+
+- Requires Flutter 3.32 (#1475)
+- Requires just_audio@0.10.4 (#1448)
+- Add support for video_player_platform_interface@6.3.0 (#1475)
+- Add support for webview_flutter_android@4.6.0 (#1475)
+- Add support for webview_flutter_wkwebview@3.20.0 (#1452)
+- Fix `text-align: center` inside tables (#1451)
+
+## 0.16.0
+
+- Requires Flutter 3.22 (#1403)
+- Add support for CSS `gap` (#1403)
+
+## 0.15.3
+
+- Add support for webview_flutter_android@4 (#1366)
+
+## 0.15.2
+
+- Add support for web@v1 (#1298)
+- Add support for Flutter 3.24 (#1308)
+- Fix `HtmlFlex` incompatibility with Flutter@master (#1308)
+- Fix unnamed function parameters (#1309, authored by hassony105)
+- Fix RenderSliver mode error when html input is empty (#1321, authored by vanvixi)
+
+## 0.15.1
+
+- Add support for `currentcolor` (#1240)
+- Fix zero size image (#1266)
+- Replace webview timers with ResizeObserver (#1241)
+- Only apply IFRAME width & height if it has both attributes (#1244)
+- Set IFRAME width & height to conform to platform view constraints (#1253)
+- Add support for `WebViewFactory.webViewGestureRecognizers` (#1268, authored by @stanislav216)
+- Add support for `WebViewFactory.webViewUnsupportedWorkaroundForIssue37` (#1268)
+
+## 0.15.0
+
+- Requires Flutter 3.16 (#1188)
+- Expand roman support to 3999 (#1154, authored by @ngthailam)
+- Fix `audio_player` throws exception when max value is 0 (#1156, also by @ngthailam 🎉)
+- Add support for `text-shadow` (#1158, another one by @ngthailam 🔥)
+- Improve support for `display: flex` (#1229, #1235)
+- Fix bug cannot select text of nested HtmlWidget inside list view render mode (#1231)
+- Fix white spaces are removed in PRE tag (#1233)
+
 ## 0.14.11
 
 - Fix infinite `TextStyle.height` (#1147)

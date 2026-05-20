@@ -16,12 +16,29 @@ void mockWebViewPlatform() {
   final emptyList = codec.encodeMessage([]);
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
   messenger.setMockMessageHandler(
+    // TODO: remove this when webview_flutter_android version >= 4.1.0
     'dev.flutter.pigeon.webview_flutter_android.InstanceManagerHostApi.clear',
     (_) => Future.value(emptyList),
   );
   messenger.setMockMessageHandler(
+    // TODO: remove this when webview_flutter_android version >= 4.1.0
     'dev.flutter.pigeon.webview_flutter_android.WebViewHostApi.setWebContentsDebuggingEnabled',
+    (message) async {
+      final decodedMessage = codec.decodeMessage(message) as List<Object?>;
+      FakeWebViewController.instance?.debuggingEnabled =
+          decodedMessage[0] == true;
+      return emptyList;
+    },
+  );
+
+  messenger.setMockMessageHandler(
+    'dev.flutter.pigeon.webview_flutter_android.PigeonInternalInstanceManager.clear',
+    (_) => Future.value(emptyList),
+  );
+  messenger.setMockMessageHandler(
+    'dev.flutter.pigeon.webview_flutter_android.WebView.setWebContentsDebuggingEnabled',
     (message) async {
       final decodedMessage = codec.decodeMessage(message) as List<Object?>;
       FakeWebViewController.instance?.debuggingEnabled =
@@ -42,6 +59,7 @@ abstract class FakeWebViewController extends PlatformWebViewController {
   JavaScriptMode? javaScriptMode;
   String? userAgent;
 
+  final _channels = <String, JavaScriptChannelParams>{};
   Uri? _currentUri;
   _FakeNavigationDelegate? _handler;
   Timer? _onPageFinishedTimer;
@@ -56,9 +74,14 @@ abstract class FakeWebViewController extends PlatformWebViewController {
   FutureOr<NavigationDecision?> onNavigationRequest({
     required String url,
     required bool isMainFrame,
-  }) async {
+  }) {
     final req = NavigationRequest(url: url, isMainFrame: isMainFrame);
     return _handler?._onNavigationRequest?.call(req);
+  }
+
+  @override
+  Future<void> addJavaScriptChannel(JavaScriptChannelParams params) async {
+    _channels[params.name] = params;
   }
 
   @override
@@ -86,21 +109,19 @@ abstract class FakeWebViewController extends PlatformWebViewController {
   }
 
   @override
-  Future<Object> runJavaScriptReturningResult(String javascript) async {
+  Future<void> runJavaScript(String javascript) async {
     final params = _currentUri?.queryParameters;
     if (params == null) {
-      return '';
+      return;
     }
 
-    const queryParam = 'runJavaScriptReturningResult';
-    if (params[queryParam] == 'error') {
-      throw PlatformException(code: queryParam);
+    final message = params['message'];
+    if (message == null) {
+      return;
     }
 
-    if (params.containsKey(javascript)) {
-      return params[javascript] ?? '';
-    } else {
-      return '';
+    for (final channel in _channels.values) {
+      channel.onMessageReceived(JavaScriptMessage(message: message));
     }
   }
 
@@ -151,6 +172,17 @@ class __FakeAndroidWebViewController extends FakeWebViewController
   __FakeAndroidWebViewController(super.params);
 
   @override
+  Future<bool> isWebViewFeatureSupported(dynamic featureType) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> setAllowContentAccess(bool enabled) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> setAllowFileAccess(bool allow) => throw UnimplementedError();
+
+  @override
   Future<void> setCustomWidgetCallbacks({
     required OnHideCustomWidgetCallback? onHideCustomWidget,
     required OnShowCustomWidgetCallback? onShowCustomWidget,
@@ -160,6 +192,10 @@ class __FakeAndroidWebViewController extends FakeWebViewController
   }
 
   @override
+  Future<void> setGeolocationEnabled(bool enabled) =>
+      throw UnimplementedError();
+
+  @override
   Future<void> setGeolocationPermissionsPromptCallbacks({
     OnGeolocationPermissionsShowPrompt? onShowPrompt,
     OnGeolocationPermissionsHidePrompt? onHidePrompt,
@@ -167,9 +203,16 @@ class __FakeAndroidWebViewController extends FakeWebViewController
       throw UnimplementedError();
 
   @override
+  Future<void> setInsetsForWebContentToIgnore(dynamic insets) =>
+      throw UnimplementedError();
+
+  @override
   Future<void> setMediaPlaybackRequiresUserGesture(bool require) async {
     androidMediaPlaybackRequiresUserGesture = require;
   }
+
+  @override
+  Future<void> setMixedContentMode(dynamic mode) => throw UnimplementedError();
 
   @override
   Future<void> setOnShowFileSelector(
@@ -179,7 +222,14 @@ class __FakeAndroidWebViewController extends FakeWebViewController
       throw UnimplementedError();
 
   @override
+  Future<void> setPaymentRequestEnabled(bool enabled) =>
+      throw UnimplementedError();
+
+  @override
   Future<void> setTextZoom(int textZoom) => throw UnimplementedError();
+
+  @override
+  Future<void> setUseWideViewPort(bool use) => throw UnimplementedError();
 
   @override
   int get webViewIdentifier => throw UnimplementedError();
@@ -191,6 +241,15 @@ class __FakeWebKitWebViewController extends FakeWebViewController
 
   @override
   Future<void> setAllowsBackForwardNavigationGestures(bool enabled) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> setAllowsLinkPreview(bool allow) => throw UnimplementedError();
+
+  @override
+  Future<void> setOnCanGoBackChange(
+    void Function(bool) onCanGoBackChangeCallback,
+  ) =>
       throw UnimplementedError();
 
   @override

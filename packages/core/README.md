@@ -1,7 +1,7 @@
 # Flutter Widget from HTML (core)
 
 [![Flutter](https://github.com/daohoangson/flutter_widget_from_html/actions/workflows/flutter.yml/badge.svg)](https://github.com/daohoangson/flutter_widget_from_html/actions/workflows/flutter.yml)
-[![codecov](https://codecov.io/gh/daohoangson/flutter_widget_from_html/branch/master/graph/badge.svg)](https://codecov.io/gh/daohoangson/flutter_widget_from_html)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=daohoangson_flutter_widget_from_html&metric=coverage)](https://sonarcloud.io/summary/new_code?id=daohoangson_flutter_widget_from_html)
 [![Pub](https://img.shields.io/pub/v/flutter_widget_from_html_core.svg)](https://pub.dev/packages/flutter_widget_from_html_core)
 
 Flutter package to render html as widgets that focuses on correctness and extensibility.
@@ -17,7 +17,7 @@ Add this to your app's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  flutter_widget_from_html_core: ^0.14.11
+  flutter_widget_from_html_core: ^0.17.2
 ```
 
 ## Usage
@@ -63,14 +63,23 @@ HtmlWidget(
       // render a custom widget that inlines with surrounding text
       return InlineCustomWidget(
         child: FizzBuzzWidget(),
-      )
+      );
     }
 
     return null;
   },
 
   // this callback will be triggered when user taps a link
-  onTapUrl: (url) => print('tapped $url'),
+  // return true to indicate the tap has been handled
+  onTapUrl: (url) {
+    debugPrint('tapped $url');
+    return true;
+  },
+
+  // this callback will be triggered when user taps an image
+  onTapImage: (image) {
+    debugPrint('image tapped: \'${image.sources.first.url}\'');
+  },
 
   // select the render mode for HTML body
   // by default, a simple `Column` is rendered
@@ -81,6 +90,13 @@ HtmlWidget(
   textStyle: TextStyle(fontSize: 14),
 ),
 ```
+
+## Callbacks
+
+- onTapUrl: return `true` to indicate the URL tap was handled; when not handled and the URL is an in-page anchor (e.g. `#id` or `${baseUrl}#id`), it scrolls to the anchor automatically.
+- onTapImage: receives `ImageMetadata`; access the first source via `image.sources.first.url`.
+- onLoadingBuilder: shown while the widget/image is loading; receives `loadingProgress` (0.0–1.0 or null).
+- onErrorBuilder: shown when a complex element fails to render; receives the thrown `error`.
 
 ## Features
 
@@ -94,7 +110,7 @@ Below tags are the ones that have special meaning / styling, all other tags will
 - IMG with support for asset (`asset://`), data uri, local file (`file://`) and network image
 - LI/OL/UL with support for:
   - Attributes: `type`, `start`, `reversed`
-  - Inline style `list-style-type` values: `lower-alpha`, `upper-alpha`, `lower-latin`, `upper-latin`, `circle`, `decimal`, `disc`, `lower-roman`, `upper-roman`, `square`
+  - Inline style `list-style-type` with 50+ predefined counter styles including `decimal`, `disc`, `circle`, `square`, `lower-alpha`, `upper-alpha`, `lower-roman`, `upper-roman`, `lower-greek`, `cjk-decimal`, `cjk-ideographic`, `hiragana`, `katakana`, `hebrew`, `georgian`, `armenian`, `korean-hangul-formal`, and more. Also supports custom string literals (e.g., `'★'`).
 - TABLE/CAPTION/THEAD/TBODY/TFOOT/TR/TD/TH with support for:
   - TABLE attributes `border`, `cellpadding`, `cellspacing`
   - TD/TH attributes `colspan`, `rowspan`, `valign`
@@ -126,7 +142,7 @@ These tags and their contents will be ignored:
 ### Inline stylings
 
 - background: 1 value (color)
-  - background-color: hex values, `rgb()`, `hsl()` or named colors
+  - background-color: `currentcolor`, hex values, `rgb()`, `hsl()` or named colors
   - background-image: `url()` with support for asset (`asset://`), data uri, local file (`file://`) and network image
   - background-repeat: no-repeat/repeat/repeat-x/repeat-y
   - background-position: single or double instances of bottom/center/left/right/top (e.g. `top left`)
@@ -140,34 +156,43 @@ These tags and their contents will be ignored:
   - border-top-right-radius: 2 values or 1 value in `em`, `pt` and `px`
   - border-bottom-right-radius: 2 values or 1 value in `em`, `pt` and `px`
   - border-bottom-left-radius: 2 values or 1 value in `em`, `pt` and `px`
-- color (similar to `background-color` inline styling)
+- color: hex values, `rgb()`, `hsl()` or named colors
 - direction (similar to `dir` attribute)
 - display: block/flex/inline/inline-block/none
   - In `flex` mode:
     - flex-direction: column/row
     - align-items: flex-start/flex-end/center/baseline/stretch
+    - gap: value in `em`, `%`, `pt` and `px`
     - justify-content: flex-start/flex-end/center/space-between/space-around/space-evenly
 - font-family
 - font-size: absolute (e.g. `xx-large`), relative (`larger`, `smaller`) or values in `em`, `%`, `pt` and `px`
 - font-style: italic/normal
 - font-weight: bold/normal/100..900
-- line-height: `normal`, number or values in `em`, `%`, `pt` and `px`
-- margin: 4 values, 2 values or 1 value in `em`, `pt` and `px`
+- line-height: `normal`, number or value in `em`, `%`, `pt` and `px`
+- margin: 4 values, 3 values, 2 values or 1 value in `em`, `pt` and `px`
   - margin-top, margin-right, margin-bottom, margin-left
   - margin-block-start, margin-block-end
   - margin-inline-start, margin-inline-end
-- padding: 4 values, 2 values or 1 value in `em`, `pt` and `px`
+- padding: 4 values, 3 values, 2 values or 1 value in `em`, `pt` and `px`
   - padding-top, padding-right, padding-bottom, padding-left
   - padding-block-start, padding-block-end
   - padding-inline-start, padding-inline-end
 - vertical-align: baseline/top/bottom/middle/sub/super
 - text-align (similar to `align` attribute)
 - text-decoration
-  - text-decoration-color
+  - text-decoration-color: `currentcolor`, hex values, `rgb()`, `hsl()` or named colors
   - text-decoration-line: line-through/none/overline/underline
-  - text-decoration-style: dotted/dashed/double/solid
+  - text-decoration-style: dotted/dashed/double/solid/wavy
   - text-decoration-thickness, text-decoration-width: values in `%` only
+- text-emphasis: shorthand for style and color
+  - text-emphasis-color: `currentcolor`, hex values, `rgb()`, `hsl()` or named colors
+  - text-emphasis-style: filled/open with dot/circle/double-circle/triangle/sesame, or custom string marks
 - text-overflow: clip/ellipsis. Note: `text-overflow: ellipsis` should be used in conjuntion with `max-lines` or `-webkit-line-clamp` for better result.
+- text-shadow:
+  - 4 values (color x y blur, color x y blur)
+  - 3 values (x y color, color x y)
+  - Or 2 values (x y)
+  - Multiple shadows
 - white-space: pre/normal/nowrap
 - Sizing: `auto` or values in `em`, `%`, `pt` and `px`
   - width, max-width, min-width
@@ -186,6 +211,6 @@ The [enhanced](https://pub.dev/packages/flutter_widget_from_html) package uses a
 - [fwfh_url_launcher](https://pub.dev/packages/fwfh_url_launcher) to launch URLs
 - [fwfh_webview](https://pub.dev/packages/fwfh_webview) for IFRAME support
 
-See [the extensibility document](https://github.com/daohoangson/flutter_widget_from_html/blob/v0.14.2/docs/extensibility.md) for detailed information.
+See [the extensibility document](https://github.com/daohoangson/flutter_widget_from_html/blob/master/docs/extensibility.md) for detailed information.
 
 <a href="https://www.buymeacoffee.com/daohoangson" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>

@@ -1,3 +1,44 @@
+## 0.15.7
+
+- Forward `allowfullscreen` and `allow` iframe attributes to WebView (#1566)
+
+## 0.15.6
+
+- Add support for webview_flutter_android@4.8 (#1498)
+- Add support for `data-src` attribute in IFRAME (#1497)
+
+## 0.15.5
+
+- Add support for flutter_widget_from_html_core@0.17.0 (#1475)
+- Add support for webview_flutter_android@4.6.0 (#1475)
+- Add support for webview_flutter_wkwebview@3.20.0 (#1452)
+
+## 0.15.4
+
+- Add support for flutter_widget_from_html_core@0.16.0 (#1405)
+
+## 0.15.3
+
+- Add support for webview_flutter_android@4 (#1366)
+
+## 0.15.2
+
+- Add support for web@v1 (#1298)
+- Fix unnamed function parameters (#1309, authored by hassony105)
+
+## 0.15.1
+
+- Replace timers with ResizeObserver (#1241)
+- Only apply IFRAME width & height if it has both attributes (#1244)
+- Set IFRAME width & height to conform to platform view constraints (#1253)
+- Add support for `WebViewFactory.webViewGestureRecognizers` (#1268, authored by @stanislav216)
+- Add support for `WebViewFactory.webViewUnsupportedWorkaroundForIssue37` (#1268)
+- Add support for flutter_widget_from_html_core@0.15.1 (#1269)
+
+## 0.15.0
+
+- Requires Flutter 3.16 (#1188)
+
 ## 0.14.8
 
 - Fix IFRAME does not respect width attribute (#1115)

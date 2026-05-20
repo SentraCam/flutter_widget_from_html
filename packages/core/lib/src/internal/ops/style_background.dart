@@ -48,12 +48,16 @@ class StyleBackground {
           );
 
           return placeholder.wrapWith(
-            (_, child) => wf.buildDecoration(
-              tree,
-              child,
-              color: color,
-              image: image,
-            ),
+            (context, child) {
+              final resolved = tree.inheritanceResolvers.resolve(context);
+              final resolvedColor = color?.getValue(resolved);
+              return wf.buildDecoration(
+                tree,
+                child,
+                color: resolvedColor,
+                image: image,
+              );
+            },
           );
         },
         onRenderInline: (tree) {
@@ -62,21 +66,16 @@ class StyleBackground {
             return;
           }
 
-          tree.inherit(_color, color);
+          tree.inherit(_textStyleBackground, color);
         },
         priority: BoxModel.background,
       );
 
-  static InheritedProperties _color(
+  static InheritedProperties _textStyleBackground(
     InheritedProperties resolving,
-    Color color,
+    CssColor color,
   ) =>
-      resolving.copyWith(
-        style: TextStyle(
-          background: Paint()..color = color,
-          debugLabel: 'fwfh: $kCssBackgroundColor',
-        ),
-      );
+      resolving.copyWith(value: TextStyleBackground(color));
 }
 
 extension on BuildTree {
@@ -107,13 +106,10 @@ extension on BuildTree {
               style.increaseIndex();
             }
           }
-          break;
         case kCssBackgroundColor:
           data = data.copyWithColor(style);
-          break;
         case kCssBackgroundImage:
           data = data.copyWithImageUrl(style);
-          break;
         case kCssBackgroundPosition:
           while (style.hasValue) {
             final prev = data;
@@ -123,11 +119,9 @@ extension on BuildTree {
               style.increaseIndex();
             }
           }
-          break;
         case kCssBackgroundRepeat:
         case kCssBackgroundSize:
           data = data.copyWithRepeatOrSize(style);
-          break;
       }
     }
 
@@ -159,7 +153,7 @@ extension on css.Expression {
 @immutable
 class _StyleBackgroundData {
   final AlignmentGeometry alignment;
-  final Color? color;
+  final CssColor? color;
   final String? imageUrl;
   final ImageRepeat repeat;
   final BoxFit size;
@@ -173,7 +167,7 @@ class _StyleBackgroundData {
 
   _StyleBackgroundData copyWith({
     AlignmentGeometry? alignment,
-    Color? color,
+    CssColor? color,
     String? imageUrl,
     ImageRepeat? repeat,
     BoxFit? size,

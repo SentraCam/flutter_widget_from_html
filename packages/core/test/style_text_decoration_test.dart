@@ -101,6 +101,13 @@ void main() {
       final e = await explain(tester, html);
       expect(e, equals('[RichText:(:(+l/#FFFF0000:foo )(+l/#FF00FF00:bar))]'));
     });
+
+    testWidgets('renders currentcolor', (WidgetTester tester) async {
+      const html = '<span style="text-decoration: red line-through">foo '
+          '<span style="text-decoration-color: currentcolor">bar</span></span>';
+      final e = await explain(tester, html);
+      expect(e, equals('[RichText:(:(+l/#FFFF0000:foo )(+l:bar))]'));
+    });
   });
 
   group('text-decoration-line', () {
@@ -206,6 +213,13 @@ foo</span></span></span>
           '<span style="text-decoration-style: solid">bar</span></span>';
       final explained = await explain(tester, html);
       expect(explained, equals('[RichText:(:(+l/dotted:foo )(+l:bar))]'));
+    });
+
+    testWidgets('renders wavy', (WidgetTester tester) async {
+      const html = '<span style="text-decoration-line: underline; '
+          'text-decoration-style: wavy">foo</span>';
+      final explained = await explain(tester, html);
+      expect(explained, equals('[RichText:(+u/wavy:foo)]'));
     });
   });
 

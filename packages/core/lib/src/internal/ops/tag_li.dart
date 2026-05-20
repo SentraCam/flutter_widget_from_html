@@ -18,13 +18,37 @@ const kCssListStyleTypeAlphaLatinLower = 'lower-latin';
 const kCssListStyleTypeAlphaLatinUpper = 'upper-latin';
 const kCssListStyleTypeChecked = 'checked';
 const kCssListStyleTypeUnchecked = 'unchecked';
+const kCssListStyleTypeArabicIndic = 'arabic-indic';
+const kCssListStyleTypeArmenian = 'armenian';
+const kCssListStyleTypeBengali = 'bengali';
+const kCssListStyleTypeCambodian = 'cambodian';
 const kCssListStyleTypeCircle = 'circle';
+const kCssListStyleTypeCjkDecimal = 'cjk-decimal';
 const kCssListStyleTypeDecimal = 'decimal';
+const kCssListStyleTypeDecimalLeadingZero = 'decimal-leading-zero';
+const kCssListStyleTypeDevanagari = 'devanagari';
 const kCssListStyleTypeDisc = 'disc';
+const kCssListStyleTypeGeorgian = 'georgian';
+const kCssListStyleTypeGujarati = 'gujarati';
+const kCssListStyleTypeGurmukhi = 'gurmukhi';
+const kCssListStyleTypeHebrew = 'hebrew';
+const kCssListStyleTypeKannada = 'kannada';
+const kCssListStyleTypeKhmer = 'khmer';
+const kCssListStyleTypeLao = 'lao';
+const kCssListStyleTypeLowerGreek = 'lower-greek';
+const kCssListStyleTypeMalayalam = 'malayalam';
+const kCssListStyleTypeMongolian = 'mongolian';
+const kCssListStyleTypeMyanmar = 'myanmar';
 const kCssListStyleTypeNone = 'none';
+const kCssListStyleTypeOriya = 'oriya';
+const kCssListStyleTypePersian = 'persian';
 const kCssListStyleTypeRomanLower = 'lower-roman';
 const kCssListStyleTypeRomanUpper = 'upper-roman';
 const kCssListStyleTypeSquare = 'square';
+const kCssListStyleTypeTamil = 'tamil';
+const kCssListStyleTypeTelugu = 'telugu';
+const kCssListStyleTypeThai = 'thai';
+const kCssListStyleTypeTibetan = 'tibetan';
 
 class TagLi {
   final WidgetFactory wf;
@@ -41,7 +65,6 @@ class TagLi {
             case kTagOrderedList:
             case kTagUnorderedList:
               element.elementDepth = subTree.increaseListDepth();
-              break;
             case kTagLi:
               if (element.parent == listTree.element) {
                 subTree.register(
@@ -58,7 +81,6 @@ class TagLi {
                   ),
                 );
               }
-              break;
           }
         },
         priority: Priority.tagLiList,
@@ -87,6 +109,7 @@ class TagLi {
 
     return HtmlListItem(
       marker: marker,
+      textAlign: resolved.get<TextAlign>(),
       textDirection: resolved.directionOrLtr,
       child: child,
     );
@@ -95,14 +118,23 @@ class TagLi {
   static StylesMap _defaultStyles(dom.Element element) {
     final attrs = element.attributes;
     final depth = element.elementDepth;
-    final listStyleType = element.localName == kTagOrderedList
-        ? (_listStyleTypeFromAttributeType(attrs[kAttributeLiType] ?? '') ??
-            kCssListStyleTypeDecimal)
-        : depth == 0
-            ? kCssListStyleTypeDisc
-            : depth == 1
-                ? kCssListStyleTypeCircle
-                : kCssListStyleTypeSquare;
+
+    final String listStyleType;
+    if (element.localName == kTagOrderedList) {
+      listStyleType =
+          _listStyleTypeFromAttributeType(attrs[kAttributeLiType] ?? '') ??
+              kCssListStyleTypeDecimal;
+    } else {
+      switch (depth) {
+        case 0:
+          listStyleType = kCssListStyleTypeDisc;
+        case 1:
+          listStyleType = kCssListStyleTypeCircle;
+        default:
+          listStyleType = kCssListStyleTypeSquare;
+      }
+    }
+
     return {
       kCssDisplay: kCssDisplayBlock,
       kCssListStyleType: listStyleType,

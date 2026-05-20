@@ -8,7 +8,7 @@ const html = '''
 
 <p>Flutter is Google's mobile UI framework for crafting high-quality native interfaces on iOS and Android in record time. Flutter works with existing code, is used by developers and organizations around the world, and is free and open source.</p>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/fq4N0hgOWzU"></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/fq4N0hgOWzU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 <h1>Filler text below</h1>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent neque nibh, interdum bibendum enim ut, varius pretium lacus. Sed ut hendrerit eros, blandit lacinia risus. Maecenas sit amet ullamcorper arcu, vitae bibendum eros. Morbi ipsum urna, elementum non dui eu, tristique hendrerit ipsum. Donec ullamcorper neque libero, eu fermentum purus ultrices ac. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam dictum justo vel urna viverra maximus.</p>
@@ -31,43 +31,43 @@ class _State extends State<IframeScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('IframeScreen'),
+    appBar: AppBar(
+      title: const Text('IframeScreen'),
+    ),
+    body: ListView(
+      children: <Widget>[
+        CheckboxListTile(
+          value: webView,
+          onChanged: (v) => setState(() => webView = v == true),
+          title: const HtmlWidget('<var>.webView</var>'),
+          subtitle: const Text('Renders web view, default ❌'),
         ),
-        body: ListView(
-          children: <Widget>[
-            CheckboxListTile(
-              value: webView,
-              onChanged: (v) => setState(() => webView = v == true),
-              title: const HtmlWidget('<var>.webView</var>'),
-              subtitle: const Text('Renders web view, default ❌'),
-            ),
-            CheckboxListTile(
-              value: webViewJs,
-              onChanged: (v0) => setState(() {
-                final v = v0 == true;
-                if (v) {
-                  webView = true;
-                }
-                webViewJs = v;
-              }),
-              title: const HtmlWidget('<var>.webViewJs</var>'),
-              subtitle: const Text('Allows JavaScript execution, default ✅'),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: HtmlWidget(
-                html,
-                factoryBuilder: () => _WidgetFactory(
-                  webView: webView,
-                  webViewJs: webViewJs,
-                ),
-                rebuildTriggers: [webView, webViewJs],
-              ),
-            ),
-          ],
+        CheckboxListTile(
+          value: webViewJs,
+          onChanged: (v0) => setState(() {
+            final v = v0 == true;
+            if (v) {
+              webView = true;
+            }
+            webViewJs = v;
+          }),
+          title: const HtmlWidget('<var>.webViewJs</var>'),
+          subtitle: const Text('Allows JavaScript execution, default ✅'),
         ),
-      );
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: HtmlWidget(
+            html,
+            factoryBuilder: () => _WidgetFactory(
+              webView: webView,
+              webViewJs: webViewJs,
+            ),
+            rebuildTriggers: [webView, webViewJs],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _WidgetFactory extends WidgetFactory {

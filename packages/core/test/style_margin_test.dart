@@ -117,6 +117,49 @@ void main() {
     });
   });
 
+  group('3 values', () {
+    testWidgets('parses all', (WidgetTester tester) async {
+      const html = '<div style="margin: 1px 2px 3px">Foo</div>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals(
+          '[SizedBox:0.0x1.0],'
+          '[HorizontalMargin:left=2,right=2,child=[CssBlock:child=[RichText:(:Foo)]]],'
+          '[SizedBox:0.0x3.0]',
+        ),
+      );
+    });
+
+    testWidgets('parses all (rtl)', (WidgetTester tester) async {
+      const html = '<div style="margin: 1px 2px 3px">Foo</div>';
+      final explained = await explain(tester, html, rtl: true);
+      expect(
+        explained,
+        equals(
+          '[SizedBox:0.0x1.0],'
+          '[HorizontalMargin:left=2,right=2,child='
+          '[CssBlock:child=[RichText:dir=rtl,(:Foo)]]'
+          '],'
+          '[SizedBox:0.0x3.0]',
+        ),
+      );
+    });
+
+    testWidgets('parses top and bottom only', (WidgetTester tester) async {
+      const html = '<div style="margin: 1px 0 3px">Foo</div>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals(
+          '[SizedBox:0.0x1.0],'
+          '[CssBlock:child=[RichText:(:Foo)]],'
+          '[SizedBox:0.0x3.0]',
+        ),
+      );
+    });
+  });
+
   group('2 values', () {
     testWidgets('parses both', (WidgetTester tester) async {
       const html = '<div style="margin: 5px 10px">Foo</div>';
@@ -756,6 +799,33 @@ void main() {
       expect(drySize, equals(const Size(50, 10)));
     });
 
+    testWidgets('computeDryBaseline', (tester) async {
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 100,
+              child: HorizontalMargin(
+                key: key,
+                left: 10,
+                right: 10,
+                child: const Text('Hello'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final renderBox = key.renderBox;
+      final baseline = renderBox.getDryBaseline(
+        renderBox.constraints,
+        TextBaseline.alphabetic,
+      );
+      expect(baseline, isNotNull);
+    });
+
     group('computeMaxIntrinsicWidth', () {
       testWidgets('computes with child', (tester) async {
         await tester.pumpSizedBox(left: 1, right: 2);
@@ -843,7 +913,7 @@ void main() {
 
 extension on WidgetTester {
   RenderBox get horizontalMargin =>
-      renderObject(find.byType(HorizontalMargin)) as RenderBox;
+      renderObject(find.byType(HorizontalMargin)).renderBox;
 
   Future<GlobalKey> pumpSizedBox({
     bool isNull = false,

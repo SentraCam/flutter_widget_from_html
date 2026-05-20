@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '_.dart';
@@ -51,6 +52,12 @@ void main() {
       const html = '<span style="border: red solid 2px">Foo</span>';
       final explained = await explain(tester, html);
       expect(explained, equals(expected));
+    });
+
+    testWidgets('renders currentcolor', (WidgetTester tester) async {
+      const html = '<span style="border: currentcolor solid 1px">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(explained, contains('1.0@solid#FF001234'));
     });
   });
 
@@ -763,6 +770,36 @@ void main() {
       );
     });
 
+    testWidgets('#1560: border-radius with background-color and margin',
+        (tester) async {
+      const html = '<span style="border-radius: 1px; '
+          'background-color: red; margin-right: 1px;">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals(
+          '[HorizontalMargin:left=0,right=1,child='
+          '[Container:color=#FFFF0000,'
+          'radius=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],'
+          'child=[RichText:(:Foo)]]]',
+        ),
+      );
+    });
+
+    testWidgets('#1560: block border-radius with background-color clips',
+        (tester) async {
+      const html =
+          '<section style="border-radius: 1px; background-color: red;">'
+          'Foo</section>';
+      await explain(tester, html);
+
+      final container =
+          tester.widgetList<Container>(find.byType(Container)).firstWhere(
+                (c) => (c.decoration as BoxDecoration?)?.borderRadius != null,
+              );
+      expect(container.clipBehavior, equals(Clip.hardEdge));
+    });
+
     testWidgets('ignore radius if border is not uniform', (t) async {
       // https://github.com/daohoangson/flutter_widget_from_html/issues/909
       const html = '<section style="border-bottom: 1px solid rgb(62, 62, 62); '
@@ -1003,6 +1040,36 @@ void main() {
         ),
       );
     });
+
+    testWidgets('overwrites width', (tester) async {
+      const html =
+          '<span style="border: solid; border-top: 2px solid">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals(
+          '[Container:'
+          'border=($_border2,$_border1,$_border1,$_border1),'
+          'child=[RichText:(:Foo)]]',
+        ),
+      );
+    });
+
+    testWidgets('overwrites width and resets color', (tester) async {
+      const html =
+          '<span style="border: red solid; border-top: 2px solid">Foo</span>';
+      final explained = await explain(tester, html);
+      const borderRed = '1.0@solid#FFFF0000';
+      expect(
+        explained,
+        equals(
+          '[Container:'
+          // this behavior is unintuitive but matches browser's implementations
+          'border=($_border2,$borderRed,$borderRed,$borderRed),'
+          'child=[RichText:(:Foo)]]',
+        ),
+      );
+    });
   });
 
   group('isBlockElement', () {
@@ -1152,6 +1219,165 @@ void main() {
           ),
         );
       });
+    });
+  });
+
+  group('border-style', () {
+    testWidgets('solid alone produces no border', (WidgetTester tester) async {
+      const html = '<span style="border-style: solid">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(explained, equals('[RichText:(:Foo)]'));
+    });
+
+    testWidgets('solid + width renders', (WidgetTester tester) async {
+      const html =
+          '<span style="border-style: solid; border-width: 2px">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=$_border2,child=[RichText:(:Foo)]]'),
+      );
+    });
+
+    testWidgets('width before style renders', (WidgetTester tester) async {
+      const html =
+          '<span style="border-width: 2px; border-style: solid">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=$_border2,child=[RichText:(:Foo)]]'),
+      );
+    });
+
+    testWidgets('2-value style with width renders',
+        (WidgetTester tester) async {
+      // 2 values: top/bottom and left/right — both render as solid
+      const html =
+          '<span style="border-style: solid dotted; border-width: 2px">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=$_border2,child=[RichText:(:Foo)]]'),
+      );
+    });
+
+    testWidgets('none clears existing border', (WidgetTester tester) async {
+      const html =
+          '<span style="border: 2px solid red; border-style: none">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(explained, equals('[RichText:(:Foo)]'));
+    });
+  });
+
+  group('border-width', () {
+    testWidgets('width alone produces no border', (WidgetTester tester) async {
+      const html = '<span style="border-width: 2px">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(explained, equals('[RichText:(:Foo)]'));
+    });
+
+    testWidgets('4-value widths with style', (WidgetTester tester) async {
+      const html =
+          '<span style="border-width: 1px 2px 3px 4px; border-style: solid">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals(
+          '[Container:'
+          'border=(1.0@solid#FF001234,2.0@solid#FF001234,3.0@solid#FF001234,4.0@solid#FF001234),'
+          'child=[RichText:(:Foo)]]',
+        ),
+      );
+    });
+
+    testWidgets('2-value widths with style', (WidgetTester tester) async {
+      const html =
+          '<span style="border-width: 1px 2px; border-style: solid">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals(
+          '[Container:'
+          'border=(1.0@solid#FF001234,2.0@solid#FF001234,1.0@solid#FF001234,2.0@solid#FF001234),'
+          'child=[RichText:(:Foo)]]',
+        ),
+      );
+    });
+
+    testWidgets('3-value widths with style', (WidgetTester tester) async {
+      const html =
+          '<span style="border-width: 1px 2px 3px; border-style: solid">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals(
+          '[Container:'
+          'border=(1.0@solid#FF001234,2.0@solid#FF001234,3.0@solid#FF001234,2.0@solid#FF001234),'
+          'child=[RichText:(:Foo)]]',
+        ),
+      );
+    });
+
+    testWidgets('overrides shorthand width', (WidgetTester tester) async {
+      const html =
+          '<span style="border: 1px solid red; border-width: 2px">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=2.0@solid#FFFF0000,child=[RichText:(:Foo)]]'),
+      );
+    });
+  });
+
+  group('border-color', () {
+    testWidgets('color alone produces no border', (WidgetTester tester) async {
+      const html = '<span style="border-color: red">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(explained, equals('[RichText:(:Foo)]'));
+    });
+
+    testWidgets('color + style + width renders', (WidgetTester tester) async {
+      const html =
+          '<span style="border-color: red; border-style: solid; border-width: 2px">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=2.0@solid#FFFF0000,child=[RichText:(:Foo)]]'),
+      );
+    });
+
+    testWidgets('overrides shorthand color', (WidgetTester tester) async {
+      const html =
+          '<span style="border: 1px solid red; border-color: blue">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=1.0@solid#FF0000FF,child=[RichText:(:Foo)]]'),
+      );
+    });
+  });
+
+  group('standalone property cascade order', () {
+    testWidgets('shorthand after standalone overrides',
+        (WidgetTester tester) async {
+      const html =
+          '<span style="border-width: 2px; border: solid red">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=1.0@solid#FFFF0000,child=[RichText:(:Foo)]]'),
+      );
+    });
+
+    testWidgets('standalone after shorthand updates single component',
+        (WidgetTester tester) async {
+      const html =
+          '<span style="border: 1px solid red; border-width: 2px">Foo</span>';
+      final explained = await explain(tester, html);
+      expect(
+        explained,
+        equals('[Container:border=2.0@solid#FFFF0000,child=[RichText:(:Foo)]]'),
+      );
     });
   });
 

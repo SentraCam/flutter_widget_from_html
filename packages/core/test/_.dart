@@ -20,6 +20,7 @@ Widget? buildCurrentState({GlobalKey? key}) {
     return null;
   }
 
+  // suppress lint for tests
   // ignore: invalid_use_of_protected_member
   return hws.build(hws.context);
 }
@@ -27,7 +28,7 @@ Widget? buildCurrentState({GlobalKey? key}) {
 Future<String> explain(
   WidgetTester tester,
   String? html, {
-  String? Function(Explainer, Widget)? explainer,
+  String? Function(Explainer explainer, Widget child)? explainer,
   double? height,
   Widget? hw,
   GlobalKey? key,
@@ -82,7 +83,7 @@ Future<String> explain(
 }
 
 Future<String> explainWithoutPumping({
-  String? Function(Explainer, Widget)? explainer,
+  String? Function(Explainer explainer, Widget child)? explainer,
   GlobalKey? key,
   bool useExplainer = true,
 }) async {
@@ -161,7 +162,13 @@ Future<String> explainWithoutPumping({
   ).explain(built);
 
   str = str.replaceAll(RegExp('String#[^,]+,'), 'String,');
-  return str.replaceAll(RegExp('Uint8List#[0-9a-f]+,'), 'bytes,');
+  str = str.replaceAll(RegExp('Uint8List#[0-9a-f]+,'), 'bytes,');
+
+  // images
+  str = str.replaceAll(', headers: null', '');
+  str = str.replaceAll(', webHtmlElementStrategy: never', '');
+
+  return str;
 }
 
 final _explainMarginRegExp = RegExp(
@@ -216,7 +223,7 @@ Future<int> tapText(WidgetTester tester, String data) async {
 
 class Explainer {
   final BuildContext context;
-  final String? Function(Explainer, Widget)? explainer;
+  final String? Function(Explainer explainer, Widget child)? explainer;
   final TextStyle _defaultStyle;
 
   Explainer(this.context, {this.explainer})
@@ -305,9 +312,17 @@ class Explainer {
     return attr;
   }
 
+  // TODO: remove lint ignore when our minimum Flutter version >= 3.24
+  // ignore: deprecated_member_use
   String _color(Color c) => '#${_colorHex(c.alpha)}'
+      // TODO: remove lint ignore when our minimum Flutter version >= 3.24
+      // ignore: deprecated_member_use
       '${_colorHex(c.red)}'
+      // TODO: remove lint ignore when our minimum Flutter version >= 3.24
+      // ignore: deprecated_member_use
       '${_colorHex(c.green)}'
+      // TODO: remove lint ignore when our minimum Flutter version >= 3.24
+      // ignore: deprecated_member_use
       '${_colorHex(c.blue)}';
 
   String _colorHex(int i) {
@@ -445,11 +460,9 @@ class Explainer {
           clazz = 'SizedBox.shrink';
         }
         size = '';
-        break;
       case 'InfinityxInfinity':
         clazz = 'SizedBox.expand';
         size = '';
-        break;
     }
 
     final key = box.key != null ? _key(box.key!) : '';
@@ -582,21 +595,12 @@ class Explainer {
     String s = '';
 
     shadows?.forEach((element) {
-      s +=
-          'Shadow=[color=${_color(element.color)},offset=${element.offset},blurRadius=${element.blurRadius}]';
+      s += 'Shadow=[color=${_color(element.color)},'
+          'offset=${element.offset},'
+          'blurRadius=${element.blurRadius}]';
     });
 
     return s;
-  }
-
-  List<String> _flex(Flex flex) {
-    final List<String> result = [];
-
-    result.add('direction=${flex.direction.name}');
-    result.add('mainAxisAlignment=${flex.mainAxisAlignment.name}');
-    result.add('crossAxisAlignment=${flex.crossAxisAlignment.name}');
-
-    return result;
   }
 
   String _widget(Widget widget) {
@@ -609,16 +613,20 @@ class Explainer {
       return '[widget0]';
     }
 
-    if (widget is LayoutBuilder) {
+    if (widget is Builder) {
+      return _widget(widget.builder(context));
+    }
+
+    if (widget is LayoutBuilder ||
+        widget.runtimeType.toString() == 'HtmlLayoutBuilder') {
       return _widget(
-        widget.builder(
+        (widget as dynamic).builder(
           context,
           BoxConstraints.loose(
-            // TODO: remove lint ignore when our minimum Flutter version >= 3.10
-            // ignore: deprecated_member_use
-            TestWidgetsFlutterBinding.instance.window.physicalSize,
+            TestWidgetsFlutterBinding
+                .instance.platformDispatcher.implicitView!.physicalSize,
           ),
-        ),
+        ) as Widget,
       );
     }
 
@@ -640,6 +648,10 @@ class Explainer {
     }
 
     if (widget is InheritedWidget) {
+      if (widget.runtimeType.toString() == 'CssSizingHint') {
+        // v0.15+
+        return _widget(widget.child);
+      }
       if (widget.runtimeType.toString() == 'TshWidget') {
         // v0.5+
         return _widget(widget.child);
@@ -651,11 +663,13 @@ class Explainer {
     }
 
     if (widget.runtimeType.toString() == 'InlineCustomWidget') {
+      // TODO: remove ignore when our minimum core version >= 1.0
       // ignore: avoid_dynamic_calls
       return _widget((widget as dynamic).child as Widget);
     }
 
     if (widget.runtimeType.toString() == 'ValignBaselineContainer') {
+      // TODO: remove ignore when our minimum core version >= 1.0
       // ignore: avoid_dynamic_calls
       return _widget((widget as dynamic).child as Widget);
     }
@@ -711,9 +725,11 @@ class Explainer {
       _textDirection(
         widget is Column
             ? widget.textDirection
-            : widget is RichText
+            : widget is Flex
                 ? widget.textDirection
-                : (widget is Text ? widget.textDirection : null),
+                : widget is RichText
+                    ? widget.textDirection
+                    : (widget is Text ? widget.textDirection : null),
       ),
     );
 
@@ -766,6 +782,37 @@ class Explainer {
       attr.add(_limitBox(widget));
     }
 
+    if (widget is MultiChildRenderObjectWidget) {
+      final dynamicWidget = widget as dynamic;
+      switch (widget.runtimeType.toString()) {
+        case 'HtmlFlex':
+          attr.add(
+            // TODO: remove ignore when our minimum core version >= 1.0
+            // ignore: avoid_dynamic_calls
+            'crossAxisAlignment=${dynamicWidget.crossAxisAlignment}'
+                .replaceAll('CrossAxisAlignment.', ''),
+          );
+          attr.add(
+            // TODO: remove ignore when our minimum core version >= 1.0
+            // ignore: avoid_dynamic_calls
+            'direction=${dynamicWidget.direction}'.replaceAll('Axis.', ''),
+          );
+          attr.add(
+            // TODO: remove ignore when our minimum core version >= 1.0
+            // ignore: avoid_dynamic_calls
+            'mainAxisAlignment=${dynamicWidget.mainAxisAlignment}'
+                .replaceAll('MainAxisAlignment.', ''),
+          );
+
+          // TODO: remove ignore when our minimum core version >= 1.0
+          // ignore: avoid_dynamic_calls
+          final spacing = dynamicWidget.spacing as double;
+          if (spacing != 0.0) {
+            attr.add('spacing=$spacing');
+          }
+      }
+    }
+
     if (widget is Padding) {
       attr.add(_edgeInsets(widget.padding));
     }
@@ -784,22 +831,18 @@ class Explainer {
           // TODO: remove ignore when our minimum core version >= 1.0
           // ignore: avoid_dynamic_calls
           final left = dynamicWidget.left as double;
+          // TODO: remove ignore when our minimum core version >= 1.0
           // ignore: avoid_dynamic_calls
           final right = dynamicWidget.right as double;
           attr.add(
             'left=${left.isInfinite ? '∞' : left.truncate()},'
             'right=${right.isInfinite ? '∞' : right.truncate()}',
           );
-          break;
       }
     }
 
     if (widget is Tooltip) {
       attr.add('message=${widget.message}');
-    }
-
-    if (widget is! Column && (widget is Flex)) {
-      attr.addAll(_flex(widget));
     }
 
     // Special cases
@@ -865,7 +908,7 @@ class HitTestApp extends StatelessWidget {
   const HitTestApp({required this.html, super.key, required this.list});
 
   @override
-  Widget build(BuildContext _) => MaterialApp(
+  Widget build(BuildContext context) => MaterialApp(
         home: Scaffold(
           body: HtmlWidget(
             html,
@@ -878,42 +921,41 @@ class HitTestApp extends StatelessWidget {
       );
 }
 
-extension RenderBoxGetter on GlobalKey {
-  RenderBox get renderBox => currentContext!.findRenderObject()! as RenderBox;
+extension RenderBoxElement on Element {
+  RenderBox get renderBox => renderObject!.renderBox;
+}
 
-  Size get size => renderBox.size;
+extension RenderBoxGlobalKey on GlobalKey {
+  RenderBox get renderBox => currentContext!.findRenderObject()!.renderBox;
 
-  double get width => size.width;
+  double get width => renderBox.size.width;
+}
+
+extension RenderBoxRenderBox on RenderBox {
+  double get left => localToGlobal(Offset.zero).dx;
+
+  double get top => localToGlobal(Offset.zero).dy;
+}
+
+extension RenderBoxRenderObject on RenderObject {
+  RenderBox get renderBox => this as RenderBox;
 }
 
 extension WindowTester on WidgetTester {
-  double get windowWidth =>
-      // TODO: remove lint ignore when our minimum Flutter version >= 3.10
-      // ignore: deprecated_member_use
-      binding.window.physicalSize.width /
-      // ignore: deprecated_member_use
-      binding.window.devicePixelRatio;
+  double get windowHeight => view.physicalSize.height / view.devicePixelRatio;
+
+  double get windowWidth => view.physicalSize.width / view.devicePixelRatio;
 
   void setTextScaleFactor(double value) {
-    // TODO: remove lint ignore when our minimum Flutter version >= 3.10
-    // ignore: deprecated_member_use
-    binding.window.platformDispatcher.textScaleFactorTestValue = value;
-    addTearDown(
-      // ignore: deprecated_member_use
-      binding.window.platformDispatcher.clearTextScaleFactorTestValue,
-    );
+    platformDispatcher.textScaleFactorTestValue = value;
+    addTearDown(platformDispatcher.clearTextScaleFactorTestValue);
   }
 
   void setWindowSize(Size size) {
-    // TODO: remove lint ignore when our minimum Flutter version >= 3.10
-    // ignore: deprecated_member_use
-    binding.window.physicalSizeTestValue = size;
-    // ignore: deprecated_member_use
-    addTearDown(binding.window.clearPhysicalSizeTestValue);
-    // ignore: deprecated_member_use
-    binding.window.devicePixelRatioTestValue = 1.0;
-    // ignore: deprecated_member_use
-    addTearDown(binding.window.clearDevicePixelRatioTestValue);
+    view.physicalSize = size;
+    addTearDown(view.resetPhysicalSize);
+    view.devicePixelRatio = 1.0;
+    addTearDown(view.resetDevicePixelRatio);
   }
 }
 

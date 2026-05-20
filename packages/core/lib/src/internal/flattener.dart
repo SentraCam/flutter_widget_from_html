@@ -15,7 +15,8 @@ class Flattener implements Flattened {
   final WidgetFactory wf;
   final _widgets = <WidgetPlaceholder>[];
 
-  List<InlineSpan? Function(BuildContext, {bool? isLast})>? _childrenBuilder;
+  List<InlineSpan? Function(BuildContext context, {bool? isLast})>?
+      _childrenBuilder;
   late InheritanceResolvers _firstInheritanceResolvers;
   late List<_String> _firstStrings;
 
@@ -369,33 +370,26 @@ extension on List<_String> {
 
     for (var i = min; i <= max; i++) {
       final str = this[i];
-      if (str.shouldBeSwallowed) {
-        continue;
-      }
 
       if (str.isWhitespace) {
         switch (whitespace) {
           case CssWhitespace.normal:
-            buffer.write(' ');
-            break;
+            if (!str.shouldBeSwallowed) {
+              buffer.write(' ');
+            }
           case CssWhitespace.nowrap:
             buffer.write('\u00A0');
-            break;
           case CssWhitespace.pre:
             buffer.write(str.data);
-            break;
         }
       } else {
         switch (whitespace) {
           case CssWhitespace.normal:
             buffer.write(str.data);
-            break;
           case CssWhitespace.nowrap:
             buffer.write(str.data.replaceAll(' ', '\u00A0'));
-            break;
           case CssWhitespace.pre:
             buffer.write(str.data);
-            break;
         }
       }
     }

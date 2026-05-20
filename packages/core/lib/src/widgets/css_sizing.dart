@@ -12,11 +12,11 @@ class CssBlock extends SingleChildRenderObjectWidget {
   const CssBlock({super.child, super.key});
 
   @override
-  RenderObject createRenderObject(BuildContext _) =>
+  RenderObject createRenderObject(BuildContext context) =>
       _RenderCssSizing(preferredWidth: const CssSizingValue.percentage(100));
 
   @override
-  void updateRenderObject(BuildContext _, RenderObject renderObject) =>
+  void updateRenderObject(BuildContext context, RenderObject renderObject) =>
       (renderObject as _RenderCssSizing).setPreferredSize(
         null,
         const CssSizingValue.percentage(100),
@@ -68,15 +68,18 @@ class CssSizing extends SingleChildRenderObjectWidget {
   });
 
   @override
-  RenderObject createRenderObject(BuildContext _) => _RenderCssSizing(
-        maxHeight: maxHeight,
-        maxWidth: maxWidth,
-        minHeight: minHeight,
-        minWidth: minWidth,
-        preferredAxis: preferredAxis,
-        preferredHeight: preferredHeight,
-        preferredWidth: preferredWidth,
-      );
+  RenderObject createRenderObject(BuildContext context) {
+    final hint = context.dependOnInheritedWidgetOfExactType<CssSizingHint>();
+    return _RenderCssSizing(
+      maxHeight: maxHeight ?? hint?.maxHeight.cssSizingValue,
+      maxWidth: maxWidth ?? hint?.maxWidth.cssSizingValue,
+      minHeight: minHeight ?? hint?.minHeight.cssSizingValue,
+      minWidth: minWidth ?? hint?.minWidth.cssSizingValue,
+      preferredAxis: preferredAxis,
+      preferredHeight: preferredHeight,
+      preferredWidth: preferredWidth,
+    );
+  }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -114,11 +117,12 @@ class CssSizing extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext _, RenderObject renderObject) {
+  void updateRenderObject(BuildContext context, RenderObject renderObject) {
+    final hint = context.dependOnInheritedWidgetOfExactType<CssSizingHint>();
     (renderObject as _RenderCssSizing)
       ..setConstraints(
-        maxHeight: maxHeight,
-        maxWidth: maxWidth,
+        maxHeight: maxHeight ?? hint?.maxHeight.cssSizingValue,
+        maxWidth: maxWidth ?? hint?.maxWidth.cssSizingValue,
         minHeight: minHeight,
         minWidth: minWidth,
       )
@@ -128,6 +132,29 @@ class CssSizing extends SingleChildRenderObjectWidget {
         preferredHeight,
       );
   }
+}
+
+class CssSizingHint extends InheritedWidget {
+  final double? maxHeight;
+  final double? maxWidth;
+  final double? minHeight;
+  final double? minWidth;
+
+  const CssSizingHint({
+    required super.child,
+    super.key,
+    this.maxHeight,
+    this.maxWidth,
+    this.minHeight,
+    this.minWidth,
+  });
+
+  @override
+  bool updateShouldNotify(CssSizingHint oldWidget) =>
+      maxHeight != oldWidget.maxHeight ||
+      maxWidth != oldWidget.maxWidth ||
+      minHeight != oldWidget.minHeight ||
+      minWidth != oldWidget.minWidth;
 }
 
 class _RenderCssSizing extends RenderProxyBox {
@@ -193,6 +220,20 @@ class _RenderCssSizing extends RenderProxyBox {
   }
 
   @override
+  double? computeDryBaseline(
+    BoxConstraints constraints,
+    TextBaseline baseline,
+  ) {
+    final scopedChild = child;
+    if (scopedChild == null) {
+      return null;
+    }
+
+    final cc = _applyContraints(constraints);
+    return scopedChild.getDryBaseline(cc, baseline);
+  }
+
+  @override
   Size computeDryLayout(BoxConstraints constraints) {
     final scopedChild = child;
     if (scopedChild == null) {
@@ -253,12 +294,16 @@ class _RenderCssSizing extends RenderProxyBox {
           )
         : null;
 
-    final cc = BoxConstraints(
+    var cc = BoxConstraints(
       maxHeight: stableChildSize?.height ?? preferredHeight ?? maxHeight,
       maxWidth: stableChildSize?.width ?? preferredWidth ?? maxWidth,
       minHeight: stableChildSize?.height ?? preferredHeight ?? minHeight,
       minWidth: stableChildSize?.width ?? preferredWidth ?? minWidth,
     );
+
+    // after everything... if the incoming is tight then we must follow it
+    cc = c.hasTightWidth ? cc.tighten(width: c.maxWidth) : cc;
+    cc = c.hasTightHeight ? cc.tighten(height: c.maxHeight) : cc;
 
     return cc;
   }
@@ -294,9 +339,11 @@ class _RenderCssSizing extends RenderProxyBox {
     final sizeWidth = scopedChild.getDryLayout(tightWidth);
 
     final childAspectRatio = sizeWidth.width / sizeWidth.height;
+    final sizeHeightRatio = sizeHeight.width / sizeHeight.height;
     const epsilon = 0.01;
-    if ((childAspectRatio - sizeHeight.width / sizeHeight.height).abs() >
-        epsilon) {
+    if (childAspectRatio.isNaN ||
+        sizeHeightRatio.isNaN ||
+        (childAspectRatio - sizeHeightRatio).abs() > epsilon) {
       return null;
     }
 
@@ -381,4 +428,11 @@ class _CssSizingValue extends CssSizingValue {
       other is _CssSizingValue && other.value == value;
   @override
   String toString() => value.toStringAsFixed(1);
+}
+
+extension on double? {
+  CssSizingValue? get cssSizingValue {
+    final v = this;
+    return v == null ? null : CssSizingValue.value(v);
+  }
 }

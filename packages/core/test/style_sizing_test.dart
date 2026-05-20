@@ -591,6 +591,28 @@ Future<void> main() async {
       );
     });
 
+    testWidgets('computeDryBaseline', (tester) async {
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CssSizing(
+              key: key,
+              child: const Text('Hello'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final renderBox = key.renderBox;
+      final baseline = renderBox.getDryBaseline(
+        renderBox.constraints,
+        TextBaseline.alphabetic,
+      );
+      expect(baseline, isNotNull);
+    });
+
     group('_guessChildSize with 2 dimensions', () {
       testWidgets('respect wide child', (tester) async {
         final key = GlobalKey();
@@ -821,7 +843,7 @@ class _Golden extends StatelessWidget {
   const _Golden(this.html);
 
   @override
-  Widget build(BuildContext _) => Scaffold(
+  Widget build(BuildContext context) => Scaffold(
         body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: HtmlWidget(html),

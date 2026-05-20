@@ -418,57 +418,6 @@ Future<void> main() async {
     });
   });
 
-  group('width', () {
-    testWidgets('renders without width', (WidgetTester tester) async {
-      const html = '<table><tr><td>Foo</td></tr></table>';
-      final e = await explain(tester, html, useExplainer: false);
-      expect(e, contains('└HtmlTableCell(columnStart: 0, rowStart: 0)'));
-    });
-
-    testWidgets('renders width: 50px', (WidgetTester tester) async {
-      const html = '<table><tr><td style="width: 50px">Foo</td></tr></table>';
-      final explained = await explain(tester, html, useExplainer: false);
-      expect(
-        explained,
-        isNot(contains('└HtmlTableCell(columnStart: 0, rowStart: 0)')),
-      );
-      expect(
-        explained,
-        contains('└HtmlTableCell(columnStart: 0, rowStart: 0, width: 50.0)'),
-      );
-    });
-
-    testWidgets('renders width: 100%', (WidgetTester tester) async {
-      const html = '<table><tr><td style="width: 100%">Foo</td></tr></table>';
-      final explained = await explain(tester, html, useExplainer: false);
-      expect(
-        explained,
-        isNot(contains('└HtmlTableCell(columnStart: 0, rowStart: 0)')),
-      );
-      expect(
-        explained,
-        contains('└HtmlTableCell(columnStart: 0, rowStart: 0, width: 100.0%)'),
-      );
-    });
-
-    testWidgets('renders width: 100% within TABLE', (tester) async {
-      const html = '<table><tr><td>'
-          '<table><tr><td style="width: 100%">'
-          'Foo'
-          '</td></tr></table>'
-          '</td></tr></table>';
-      final explained = await explain(tester, html, useExplainer: false);
-      expect(
-        explained,
-        contains('└HtmlTableCell(columnStart: 0, rowStart: 0)'),
-      );
-      expect(
-        explained,
-        contains('└HtmlTableCell(columnStart: 0, rowStart: 0, width: 100.0%)'),
-      );
-    });
-  });
-
   group('combos', () {
     testWidgets('renders nested table', (WidgetTester tester) async {
       // https://github.com/daohoangson/flutter_widget_from_html/issues/1070
@@ -494,7 +443,7 @@ Future<void> main() async {
       const windowSize = 100.0;
       tester.setWindowSize(const Size(windowSize, windowSize));
 
-      const html = '<table><tr><td align="center">'
+      const html = '<table style="width: 100%"><tr><td align="center">'
           '<table><tr><td>Foo</td></tr></table>'
           '</td></tr></table>';
       await explain(tester, html);
@@ -519,7 +468,7 @@ Future<void> main() async {
         findsNWidgets(2),
         reason: 'Implementation details: HR renders two `Container` widgets.',
       );
-      final box = tester.firstRenderObject(containerFinder) as RenderBox;
+      final box = tester.firstRenderObject(containerFinder).renderBox;
       expect(box.size.width, equals(foo.width));
       expect(box.size.height, greaterThan(.0));
     });
@@ -653,81 +602,6 @@ Future<void> main() async {
     });
   });
 
-  group('background', () {
-    testWidgets('cell color', (WidgetTester tester) async {
-      // https://github.com/daohoangson/flutter_widget_from_html/issues/171
-      const html = '<table><tr>'
-          '<td style="background-color: #f00">Foo</td>'
-          '</tr></table>';
-      final explained = await explain(tester, html);
-      expect(
-        explained,
-        equals(
-          '[SingleChildScrollView:child=[HtmlTable:children='
-          '[HtmlTableCell:child='
-          '[Container:color=#FFFF0000,child='
-          '[Padding:(1,1,1,1),child='
-          '[Align:alignment=centerLeft,widthFactor=1.0,child='
-          '[RichText:(:Foo)]'
-          ']]]]]]',
-        ),
-      );
-    });
-
-    testWidgets('row color', (WidgetTester tester) async {
-      // https://github.com/daohoangson/flutter_widget_from_html/issues/1028
-      const html = '<table><tr style="background-color: #f00">'
-          '<td>Foo</td><td>Bar</td>'
-          '</tr></table>';
-      final explained = await explain(tester, html);
-      expect(
-        explained,
-        equals(
-          '[SingleChildScrollView:child=[HtmlTable:children='
-          '[HtmlTableCell:child='
-          '[Container:color=#FFFF0000,child='
-          '[Padding:(1,1,1,1),child='
-          '[Align:alignment=centerLeft,widthFactor=1.0,child='
-          '[RichText:(:Foo)]'
-          ']]]],'
-          '[HtmlTableCell:child='
-          '[Container:color=#FFFF0000,child='
-          '[Padding:(1,1,1,1),child='
-          '[Align:alignment=centerLeft,widthFactor=1.0,child='
-          '[RichText:(:Bar)]'
-          ']]]]'
-          ']]',
-        ),
-      );
-    });
-
-    testWidgets('overwrites row color', (WidgetTester tester) async {
-      const html = '<table><tr style="background-color: #f00">'
-          '<td>Foo</td><td style="background-color: #0f0">Bar</td>'
-          '</tr></table>';
-      final explained = await explain(tester, html);
-      expect(
-        explained,
-        equals(
-          '[SingleChildScrollView:child=[HtmlTable:children='
-          '[HtmlTableCell:child='
-          '[Container:color=#FFFF0000,child='
-          '[Padding:(1,1,1,1),child='
-          '[Align:alignment=centerLeft,widthFactor=1.0,child='
-          '[RichText:(:Foo)]'
-          ']]]],'
-          '[HtmlTableCell:child='
-          '[Container:color=#FF00FF00,child='
-          '[Padding:(1,1,1,1),child='
-          '[Align:alignment=centerLeft,widthFactor=1.0,child='
-          '[RichText:(:Bar)]'
-          ']]]]'
-          ']]',
-        ),
-      );
-    });
-  });
-
   testWidgets('renders display: table', (WidgetTester tester) async {
     const html = '''
 <div style="display: table">
@@ -747,10 +621,10 @@ Future<void> main() async {
       equals(
         '[SingleChildScrollView:child=[HtmlTable:children='
         '[HtmlTableCaption:child=[RichText:align=center,(:Caption)]],'
-        '[HtmlTableCell:child=[RichText:(+b:Header 1)]],'
-        '[HtmlTableCell:child=[RichText:(+b:Header 2)]],'
-        '[HtmlTableCell:child=[RichText:(:Value 1)]],'
-        '[HtmlTableCell:child=[RichText:(:Value 2)]]'
+        '[HtmlTableCell:child=[CssBlock:child=[RichText:(+b:Header 1)]]],'
+        '[HtmlTableCell:child=[CssBlock:child=[RichText:(+b:Header 2)]]],'
+        '[HtmlTableCell:child=[CssBlock:child=[RichText:(:Value 1)]]],'
+        '[HtmlTableCell:child=[CssBlock:child=[RichText:(:Value 2)]]]'
         ']]',
       ),
     );
@@ -767,8 +641,8 @@ Future<void> main() async {
       explained,
       equals(
         '[SingleChildScrollView:child=[HtmlTable:children='
-        '[HtmlTableCell:child=[RichText:(:Foo)]],'
-        '[HtmlTableCell:child=[RichText:(:Bar)]]'
+        '[HtmlTableCell:child=[CssBlock:child=[RichText:(:Foo)]]],'
+        '[HtmlTableCell:child=[CssBlock:child=[RichText:(:Bar)]]]'
         ']]',
       ),
     );
@@ -812,22 +686,6 @@ Future<void> main() async {
         expect(after.borderSpacing, equals(20.0));
       });
 
-      testWidgets('updates maxWidths', (WidgetTester tester) async {
-        await explain(
-          tester,
-          '<div style="max-width: 100px"><table><tr><td>Foo</td></tr></table></div>',
-        );
-        final before = tester.table;
-        expect(before.maxWidth, equals(100.0));
-
-        await explain(
-          tester,
-          '<div style="max-width: 200px"><table><tr><td>Foo</td></tr></table></div>',
-        );
-        final after = tester.table;
-        expect(after.maxWidth, equals(200.0));
-      });
-
       testWidgets('updates textDirection', (WidgetTester tester) async {
         await explain(tester, '<table><tr><td>Foo</td></tr></table>');
         final before = tester.table;
@@ -841,14 +699,14 @@ Future<void> main() async {
 
     testWidgets('computeDistanceToActualBaseline', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 HtmlTable(
-                  children: const [
+                  children: [
                     HtmlTableCell(
                       columnStart: 0,
                       rowStart: 0,
@@ -856,7 +714,7 @@ Future<void> main() async {
                     ),
                   ],
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(10),
                   child: Text('Bar'),
                 ),
@@ -870,14 +728,14 @@ Future<void> main() async {
 
     testWidgets('computeDistanceToActualBaseline with 2 cells', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 HtmlTable(
-                  children: const [
+                  children: [
                     HtmlTableCell(
                       columnStart: 0,
                       rowStart: 0,
@@ -890,7 +748,7 @@ Future<void> main() async {
                     ),
                   ],
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(10),
                   child: Text('Foo'),
                 ),
@@ -904,16 +762,16 @@ Future<void> main() async {
 
     testWidgets('computeDistanceToActualBaseline without cell', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 HtmlTable(
-                  children: const [],
+                  children: [],
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(10),
                   child: Text('Foo'),
                 ),
@@ -966,6 +824,33 @@ Future<void> main() async {
         key.renderBox.getDryLayout(const BoxConstraints()),
         equals(Size.zero),
       );
+    });
+
+    testWidgets('computeDryBaseline', (tester) async {
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: HtmlTable(
+            key: key,
+            children: const [
+              HtmlTableCell(
+                columnStart: 0,
+                rowStart: 0,
+                child: Text('Cell'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final renderBox = key.renderBox;
+      final baseline = renderBox.getDryBaseline(
+        const BoxConstraints(maxWidth: 100, maxHeight: 100),
+        TextBaseline.alphabetic,
+      );
+      expect(baseline, isNotNull);
     });
 
     testWidgets('performs hit test', (tester) async {
@@ -1115,14 +1000,6 @@ Future<void> main() async {
         ]);
 
         expect(second.width, equals(first.width));
-
-        final m = _loggerMessages;
-        expect(m, contains(contains('Got child#0 min width:')));
-        expect(m, contains(contains('Got child#1 min width:')));
-        expect(m, contains(contains('Got child#2 size without contraints:')));
-        expect(m, isNot(contains(contains('Got child#2 min width:'))));
-        expect(m, contains(contains('Got child#3 size without contraints:')));
-        expect(m, isNot(contains(contains('Got child#3 min width:'))));
       });
     });
 
@@ -1168,12 +1045,29 @@ Future<void> main() async {
   <tr><td colspan="2">Lorem ipsum dolor sit amet.</td></tr>
   <tr><td>Foo</td><td>Bar</td></tr>
 </table>''',
-              'height_1px': 'Above<table border="1" style="height: 1px">'
-                  '<tr><td style="height: 1px">Foo</td></tr></table>Below',
               'rowspan': '''
 <table border="1">
   <tr><td rowspan="2">$multiline</td><td>Foo</td></tr>
   <tr><td>Bar</td></tr>
+</table>''',
+              // TODO: doesn't match browser output
+              'sizing_height_1px': '''
+Above
+
+<table border="1" style="height: 1px">
+  <tr>
+    <td style="height: 1px">Foo</td>
+  </tr>
+</table>
+
+Below''',
+              'sizing_width_100_percent': '''
+<table border="1" style="width: 100%">
+  <tr>
+    <td>One</td>
+    <td>Two</td>
+    <td>Three</td>
+  </tr>
 </table>''',
               'valign_baseline_1a': '''
 <table border="1">
@@ -1214,8 +1108,9 @@ Future<void> main() async {
     <td valign="baseline">Foo</td>
   </tr>
 </table>''',
+              // https://github.com/daohoangson/flutter_widget_from_html/issues/171
+              // https://github.com/daohoangson/flutter_widget_from_html/issues/1028
               'row_color': '''
-<!-- https://github.com/daohoangson/flutter_widget_from_html/issues/1028 -->
 <table style="border-collapse: collapse;">
   <tr>
     <th>First Name</th>
@@ -1235,7 +1130,7 @@ Future<void> main() async {
   <tr style="background-color: #f2f2f2;">
     <td>Adam</td>
     <td>Johnson</td>
-    <td>67</td>
+    <td style="background-color: red;">67</td>
   </tr>
 </table>''',
               'rtl': '''
@@ -1282,6 +1177,18 @@ Future<void> main() async {
     <td>$multiline</td>
   </tr>
 </table>''',
+              // https://github.com/daohoangson/flutter_widget_from_html/issues/1322
+              // https://github.com/daohoangson/flutter_widget_from_html/issues/1446
+              'text_align_center': '''
+<table border="1">
+  <tr>
+    <td>Long long long text</td>
+  </tr>
+  <tr>
+    <td style="text-align: center;">Short text</td>
+  </tr>
+</table>
+''',
               'width_redistribution_wide': '''
 <div style="background: red; width: 400px">
   <table border="1">
@@ -1302,6 +1209,7 @@ Future<void> main() async {
     </tr>
   </table>
 </div>''',
+              // TODO: doesn't match browser output
               'width_in_percent': '''
 <table border="1">
   <tr>
@@ -1456,8 +1364,8 @@ Future<void> main() async {
       );
       await tester.pumpAndSettle();
 
-      final fooTop = foo.renderBox.localToGlobal(Offset.zero).dy;
-      final barTop = bar.renderBox.localToGlobal(Offset.zero).dy;
+      final fooTop = foo.renderBox.top;
+      final barTop = bar.renderBox.top;
       expect(fooTop, equals(padding.top));
       expect(barTop, equals(fooTop));
     });
@@ -1492,8 +1400,8 @@ Future<void> main() async {
       );
       await tester.pumpAndSettle();
 
-      final fooTop = foo.renderBox.localToGlobal(Offset.zero).dy;
-      final barTop = bar.renderBox.localToGlobal(Offset.zero).dy;
+      final fooTop = foo.renderBox.top;
+      final barTop = bar.renderBox.top;
       expect(fooTop, equals(padding.top));
       expect(barTop, equals(fooTop));
     });
@@ -1528,8 +1436,8 @@ Future<String> explain(
 
 String _padding(String child) => '[HtmlTableCell:child='
     '[Padding:(1,1,1,1),child='
-    '[Align:alignment=centerLeft,widthFactor=1.0,child='
-    '$child]]]';
+    '[Align:alignment=centerLeft,widthFactor=1.0,child=[CssBlock:child='
+    '$child]]]]';
 
 final _loggerIsGitHubAction = Platform.environment['GITHUB_ACTIONS'] == 'true';
 final _loggerMessages = [];
@@ -1566,7 +1474,7 @@ class _Golden extends StatelessWidget {
   const _Golden(this.contents);
 
   @override
-  Widget build(BuildContext _) => Scaffold(
+  Widget build(BuildContext context) => Scaffold(
         body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: HtmlWidget(contents),

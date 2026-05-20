@@ -91,10 +91,8 @@ class _AudioPlayerState extends State<AudioPlayer> {
           final theme = Theme.of(context);
           final fontSize = DefaultTextStyle.of(context).style.fontSize ?? 14.0;
 
-          // TODO: remove lint ignore when our minimum Flutter version >= 3.10
-          // ignore: deprecated_member_use
-          final tsf = MediaQuery.textScaleFactorOf(context);
-          final iconSize = fontSize * tsf;
+          final tsf = MediaQuery.textScalerOf(context);
+          final iconSize = tsf.scale(fontSize);
 
           return DecoratedBox(
             decoration: BoxDecoration(
@@ -151,7 +149,7 @@ class _PlayButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext _) => StreamBuilder<bool>(
+  Widget build(BuildContext context) => StreamBuilder<bool>(
         builder: (_, snapshot) {
           final isPlaying = snapshot.data ?? false;
           return IconButton(
@@ -178,7 +176,7 @@ class _PositionText extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext _) => StreamBuilder<Duration?>(
+  Widget build(BuildContext context) => StreamBuilder<Duration?>(
         builder: (_, duration) => StreamBuilder<Duration>(
           builder: (_, position) {
             final max = duration.data?.inSeconds ?? -1;
@@ -191,10 +189,7 @@ class _PositionText extends StatelessWidget {
             return Text(
               text,
               style: TextStyle(fontSize: size),
-
-              // TODO: remove lint ignore when our minimum Flutter version >= 3.10
-              // ignore: deprecated_member_use
-              textScaleFactor: 1,
+              textScaler: TextScaler.noScaling,
             );
           },
           stream: positionStream,
@@ -216,7 +211,7 @@ class _PositionText extends StatelessWidget {
 class _PositionSlider extends StatelessWidget {
   final Stream<Duration?> durationStream;
   final Stream<Duration> positionStream;
-  final void Function(Duration) seek;
+  final void Function(Duration duration) seek;
   final double size;
 
   const _PositionSlider({
@@ -257,7 +252,7 @@ class _PositionSlider extends StatelessWidget {
 }
 
 class _MuteButton extends StatelessWidget {
-  final Future<void> Function(double) setVolume;
+  final Future<void> Function(double value) setVolume;
   final double size;
   final Stream<double> stream;
 
@@ -268,7 +263,7 @@ class _MuteButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext _) => StreamBuilder<double>(
+  Widget build(BuildContext context) => StreamBuilder<double>(
         builder: (_, snapshot) {
           final isMuted = (snapshot.data ?? 1.0) == 0;
           return IconButton(

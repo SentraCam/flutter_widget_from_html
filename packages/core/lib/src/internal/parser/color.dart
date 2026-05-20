@@ -1,8 +1,10 @@
 part of '../core_parser.dart';
 
 const kCssColor = 'color';
+const kCssColorCurrentColor = 'currentcolor';
+const kCssColorTransparent = 'transparent';
 
-Color? tryParseColor(css.Expression? expression) {
+CssColor? tryParseColor(css.Expression? expression) {
   if (expression == null) {
     return null;
   }
@@ -14,25 +16,37 @@ Color? tryParseColor(css.Expression? expression) {
         final params = expression.params;
         if (params.length >= 3) {
           final param0 = params[0];
-          final h = param0 is css.NumberTerm
-              ? _parseColorHue(param0.number)
-              : param0 is css.AngleTerm
-                  ? _parseColorHue(param0.angle, param0.unit)
-                  : null;
+          final double? h;
+          if (param0 is css.NumberTerm) {
+            h = _parseColorHue(param0.number);
+          } else if (param0 is css.AngleTerm) {
+            h = _parseColorHue(param0.angle, param0.unit);
+          } else {
+            h = null;
+          }
+
           final param1 = params[1];
-          final s = param1 is css.PercentageTerm
-              ? param1.valueAsDouble.clamp(0.0, 1.0)
-              : null;
+          final double? s;
+          if (param1 is css.PercentageTerm) {
+            s = param1.valueAsDouble.clamp(0.0, 1.0);
+          } else {
+            s = null;
+          }
+
           final param2 = params[2];
-          final l = param2 is css.PercentageTerm
-              ? param2.valueAsDouble.clamp(0.0, 1.0)
-              : null;
+          final double? l;
+          if (param2 is css.PercentageTerm) {
+            l = param2.valueAsDouble.clamp(0.0, 1.0);
+          } else {
+            l = null;
+          }
+
           final hslA = params.length >= 4 ? _parseColorAlpha(params[3]) : 1.0;
           if (h != null && s != null && l != null && hslA != null) {
-            return HSLColor.fromAHSL(hslA, h, s, l).toColor();
+            final hslValue = HSLColor.fromAHSL(hslA, h, s, l).toColor();
+            return CssColor.value(hslValue);
           }
         }
-        break;
       case 'rgb':
       case 'rgba':
         final params = expression.params;
@@ -42,45 +56,51 @@ Color? tryParseColor(css.Expression? expression) {
           final b = _parseColorRgbElement(params[2]);
           final rgbA = params.length >= 4 ? _parseColorAlpha(params[3]) : 1.0;
           if (r != null && g != null && b != null && rgbA != null) {
-            return Color.fromARGB((rgbA * 255).ceil(), r, g, b);
+            final rgbValue = Color.fromARGB((rgbA * 255).ceil(), r, g, b);
+            return CssColor.value(rgbValue);
           }
         }
-        break;
     }
   } else if (expression is css.HexColorTerm) {
     // cannot use expression.value directory due to issue with #f00 etc.
     final hex = expression.text.toUpperCase();
     switch (hex.length) {
       case 3:
-        return Color(int.parse('0xFF${_x2(hex)}'));
+        return CssColor(int.parse('0xFF${_x2(hex)}'));
       case 4:
         final alpha = hex[3];
         final rgb = hex.substring(0, 3);
-        return Color(int.parse('0x${_x2(alpha)}${_x2(rgb)}'));
+        return CssColor(int.parse('0x${_x2(alpha)}${_x2(rgb)}'));
       case 6:
-        return Color(int.parse('0xFF$hex'));
+        return CssColor(int.parse('0xFF$hex'));
       case 8:
         final alpha = hex.substring(6, 8);
         final rgb = hex.substring(0, 6);
-        return Color(int.parse('0x$alpha$rgb'));
+        return CssColor(int.parse('0x$alpha$rgb'));
     }
   } else if (expression is css.LiteralTerm) {
     switch (expression.valueAsString) {
-      // TODO: add support for `currentcolor`
-      case 'transparent':
-        return const Color(0x00000000);
+      case kCssColorCurrentColor:
+        return CssColor.current();
+      case kCssColorTransparent:
+        return CssColor.transparent();
     }
   }
 
   return null;
 }
 
-double? _parseColorAlpha(css.Expression v) => (v is css.NumberTerm
-        ? v.number.toDouble()
-        : v is css.PercentageTerm
-            ? v.valueAsDouble
-            : null)
-    ?.clamp(0.0, 1.0);
+double? _parseColorAlpha(css.Expression expression) {
+  final double? value;
+  if (expression is css.NumberTerm) {
+    value = expression.number.toDouble();
+  } else if (expression is css.PercentageTerm) {
+    value = expression.valueAsDouble;
+  } else {
+    value = null;
+  }
+  return value?.clamp(0, 1);
+}
 
 double _parseColorHue(num number, [int? unit]) {
   final v = number is double ? number : number.toDouble();
@@ -90,15 +110,12 @@ double _parseColorHue(num number, [int? unit]) {
     case css.TokenKind.UNIT_ANGLE_RAD:
       final rad = v;
       deg = rad * (180 / pi);
-      break;
     case css.TokenKind.UNIT_ANGLE_GRAD:
       final grad = v;
       deg = grad * 0.9;
-      break;
     case css.TokenKind.UNIT_ANGLE_TURN:
       final turn = v;
       deg = turn * 360;
-      break;
     default:
       deg = v;
   }
@@ -110,12 +127,17 @@ double _parseColorHue(num number, [int? unit]) {
   return deg % 360;
 }
 
-int? _parseColorRgbElement(css.Expression v) => (v is css.NumberTerm
-        ? v.number.ceil()
-        : v is css.PercentageTerm
-            ? (v.valueAsDouble * 255.0).ceil()
-            : null)
-    ?.clamp(0, 255);
+int? _parseColorRgbElement(css.Expression expression) {
+  final int? value;
+  if (expression is css.NumberTerm) {
+    value = expression.number.ceil();
+  } else if (expression is css.PercentageTerm) {
+    value = (expression.valueAsDouble * 255.0).ceil();
+  } else {
+    value = null;
+  }
+  return value?.clamp(0, 255);
+}
 
 String _x2(String value) {
   final sb = StringBuffer();

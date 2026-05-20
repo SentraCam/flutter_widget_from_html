@@ -245,7 +245,11 @@ abstract class BuildTree extends BuildBit with NonInheritedPropertiesOwner {
   void register(BuildOp op);
 
   /// Creates a sub tree without [append]ing.
-  BuildTree sub();
+  ///
+  /// If [element] is provided, the sub tree will be associated with that element
+  /// rather than inheriting the parent's element. This is used to preserve
+  /// element identity (e.g. `localName`) through tree transformations.
+  BuildTree sub({dom.Element? element});
 
   @override
   String toString() {

@@ -154,7 +154,7 @@ class CoreBuildTree extends BuildTree {
   }
 
   @override
-  void flatten(Flattened _) {
+  void flatten(Flattened f) {
     final scopedBuildOps = _buildOps;
     if (scopedBuildOps != null) {
       for (final op in scopedBuildOps) {
@@ -450,6 +450,7 @@ class _LockableDeclarations extends LockableList<css.Declaration> {
 
 class _WidgetPlaceholderDefault extends StatelessWidget
     implements
+        // internal implementation detail of our own placeholder
         // ignore: avoid_implementing_value_types
         WidgetPlaceholder {
   const _WidgetPlaceholderDefault();

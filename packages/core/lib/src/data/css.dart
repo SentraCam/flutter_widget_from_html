@@ -174,7 +174,7 @@ class CssRadius {
 @immutable
 class CssBorderSide {
   /// The color of this side of the border.
-  final Color? color;
+  final CssColor? color;
 
   /// The style of this side of the border.
   final TextDecorationStyle? style;
@@ -194,11 +194,11 @@ class CssBorderSide {
   bool get isNoOp => style == null || width?.isPositive != true;
 
   BorderSide? _getValue(InheritedProperties resolved) {
-    if (identical(this, none)) {
+    if (isNoOp) {
       return null;
     }
 
-    final scopedColor = color ?? resolved.get<TextStyle>()?.color;
+    final scopedColor = (color ?? CssColor.current()).getValue(resolved);
     if (scopedColor == null) {
       return null;
     }
@@ -217,22 +217,66 @@ class CssBorderSide {
   }
 
   static CssBorderSide? _copyWith(CssBorderSide? base, CssBorderSide? value) {
-    final copied = base == null || value == none
-        ? value
-        : value == null
-            ? base
-            : CssBorderSide(
-                color: value.color ?? base.color,
-                style: value.style ?? base.style,
-                width: value.width ?? base.width,
-              );
-
-    if (copied?.isNoOp == true) {
-      return none;
+    final CssBorderSide? copied;
+    if (base == null || value == none) {
+      copied = value;
+    } else if (value == null) {
+      copied = base;
+    } else {
+      copied = CssBorderSide(
+        color: value.color ?? base.color,
+        style: value.style ?? base.style,
+        width: value.width ?? base.width,
+      );
     }
 
     return copied;
   }
+}
+
+// A color.
+@immutable
+abstract class CssColor {
+  /// Returns the raw value.
+  Color? get rawValue;
+
+  /// Calculates [Color].
+  Color? getValue(InheritedProperties resolved);
+
+  /// Creates a color with the given integer value.
+  factory CssColor(int value) => _CssColorValue(Color(value));
+
+  /// Creates a `currentcolor`.
+  ///
+  /// See https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#currentcolor_keyword
+  factory CssColor.current() => const _CssColorCurrent();
+
+  /// Creates a color with the given value.
+  factory CssColor.value(Color value) => _CssColorValue(value);
+
+  /// Creates a transparent color.
+  factory CssColor.transparent() => const _CssColorValue(Color(0x00000000));
+}
+
+class _CssColorCurrent implements CssColor {
+  const _CssColorCurrent();
+
+  @override
+  Color? get rawValue => null;
+
+  @override
+  Color? getValue(InheritedProperties resolved) =>
+      resolved.get<TextStyle>()?.color;
+}
+
+class _CssColorValue implements CssColor {
+  @override
+  final Color rawValue;
+
+  const _CssColorValue(this.rawValue);
+
+  @override
+  Color? getValue(InheritedProperties resolved) => rawValue;
 }
 
 /// A length measurement.
@@ -273,7 +317,6 @@ class CssLength {
 
         value = baseValue * number;
         effectiveScaleFactor = 1;
-        break;
       case CssLengthUnit.percentage:
         if (baseValue == null) {
           return null;
@@ -281,13 +324,10 @@ class CssLength {
 
         value = baseValue * number / 100;
         effectiveScaleFactor = 1;
-        break;
       case CssLengthUnit.pt:
         value = number * 96 / 72;
-        break;
       case CssLengthUnit.px:
         value = number;
-        break;
     }
 
     return value * effectiveScaleFactor;
@@ -421,6 +461,68 @@ enum CssLengthUnit {
 
   /// Absolute unit: pixels, 1px = 1/96th of 1in.
   px,
+}
+
+/// A single shadow.
+///
+/// See [Shadow].
+class CssShadow {
+  /// The blur radius.
+  ///
+  /// See [Shadow.blurRadius].
+  final CssLength blurRadius;
+
+  /// Color that the shadow will be drawn with.
+  ///
+  /// See [Shadow.color].
+  final CssColor color;
+
+  /// The x component of [Shadow.offset].
+  ///
+  /// See [Offset.dx].
+  final CssLength offsetX;
+
+  /// The y component of [Shadow.offset].
+  ///
+  /// See [Offset.dy]
+  final CssLength offsetY;
+
+  /// Creates a single shadow.
+  CssShadow({
+    required this.blurRadius,
+    required this.color,
+    required this.offsetX,
+    required this.offsetY,
+  });
+
+  /// Calculates [Shadow].
+  Shadow? getValue(InheritedProperties resolved) {
+    final color = this.color.getValue(resolved);
+    if (color == null) {
+      return null;
+    }
+
+    final offsetX = this.offsetX.getValue(resolved);
+    if (offsetX == null) {
+      return null;
+    }
+
+    final offsetY = this.offsetY.getValue(resolved);
+    if (offsetY == null) {
+      return null;
+    }
+
+    final blurRadius = this.blurRadius.getValue(resolved);
+    if (blurRadius == null) {
+      return null;
+    }
+
+    return Shadow(
+      blurRadius: blurRadius,
+      color: color,
+      offset: Offset(offsetX, offsetY),
+    );
+  }
 }
 
 /// The whitespace behavior.

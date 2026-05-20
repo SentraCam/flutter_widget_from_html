@@ -8,6 +8,10 @@ on:
       - release/beta
       - release/master
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -34,7 +38,7 @@ jobs:
     env:
       GOLDEN_SKIP: "yes"
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Update pubspec.yaml
         run: |
           set -e
@@ -68,17 +72,13 @@ jobs:
           # restore SDK constraint
           yq e ".environment.sdk = \"${_sdkVersion}\"" -i pubspec.yaml
 
-          # extract Flutter version to install later
-          _flutterVersion=$( yq e '.environment.flutter' pubspec.yaml | sed -e 's/^>=//' | sed -e 's/-0$//' )
-          echo "FLUTTER_VERSION=${_flutterVersion}" >> $GITHUB_ENV
-
           # output for debugging
           cat pubspec.yaml
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: packages/${{ matrix.package }}/pubspec.yaml
       - run: flutter test
 
   core:
@@ -99,7 +99,7 @@ jobs:
     env:
       GOLDEN_SKIP: "yes"
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Update pubspec.yaml
         run: |
           set -e
@@ -112,7 +112,19 @@ jobs:
           # output for debugging
           cat pubspec.yaml
       - name: Setup Flutter
-        uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: ${{ matrix.channel }}
       - run: flutter test
+
+  html_flex:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify hashes
+        run: |
+          set -e
+
+          _scripts=$( cat packages/core/lib/src/widgets/html_flex.dart | head -n 22 | tail -n 21 )
+          bash -c "$_scripts"

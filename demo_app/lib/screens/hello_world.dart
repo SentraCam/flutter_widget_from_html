@@ -107,7 +107,7 @@ const kHtml = '''
 </figure>
 
 <h4>&lt;IFRAME&gt; of YouTube:</h4>
-<iframe src="https://www.youtube.com/embed/jNQXAC9IVRw" width="560" height="315">
+<iframe src="https://www.youtube.com/embed/jNQXAC9IVRw" width="560" height="315" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
   IFRAME support is not enabled.
 </iframe>
 
@@ -138,7 +138,7 @@ const kHtml = '''
 <h4>&lt;VIDEO&gt;</h4>
 <figure>
   <video controls width="250">
-    <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+    <source src="https://flutter-widget-from-html.github.io/pages/flower.mp4" type="video/mp4">
     <code>VIDEO</code> support is not enabled.
   </video>
   <figcaption>Source: <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video">developer.mozilla.org</a></figcaption>
@@ -154,20 +154,20 @@ class HelloWorldScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SelectionAreaScaffold(
-        appBar: AppBar(
-          title: const Text('HelloWorldScreen'),
-          actions: const [
-            PopupMenu(
-              scrollToTop: true,
-              toggleIsSelectable: true,
-            ),
-          ],
+    appBar: AppBar(
+      title: const Text('HelloWorldScreen'),
+      actions: const [
+        PopupMenu(
+          scrollToTop: true,
+          toggleIsSelectable: true,
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: HtmlWidget(kHtml, key: context.key),
-          ),
-        ),
-      );
+      ],
+    ),
+    body: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: HtmlWidget(kHtml, key: context.key),
+      ),
+    ),
+  );
 }

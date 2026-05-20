@@ -50,13 +50,13 @@ class HtmlWidget extends StatefulWidget {
   final OnLoadingBuilder? onLoadingBuilder;
 
   /// The callback when user taps an image.
-  final void Function(ImageMetadata)? onTapImage;
+  final void Function(ImageMetadata imageMetadata)? onTapImage;
 
   /// The callback when user taps a link.
   ///
   /// Returns `true` if the url has been handled,
   /// the default handler will be skipped.
-  final FutureOr<bool> Function(String)? onTapUrl;
+  final FutureOr<bool> Function(String url)? onTapUrl;
 
   /// The values that should trigger rebuild.
   ///
@@ -133,6 +133,8 @@ class HtmlWidgetState extends State<HtmlWidget> {
         inheritanceResolvers: _rootResolvers,
         wf: _wf,
       );
+
+  Widget get _sliverOrWidget0 => _sliverToBoxAdapterIfNeeded(widget0);
 
   @override
   void initState() {
@@ -222,9 +224,13 @@ class HtmlWidgetState extends State<HtmlWidget> {
   Future<bool> scrollToAnchor(String id) => _wf.onTapUrl('#$id');
 
   Future<Widget> _buildAsync() async {
+    if (widget.html.isEmpty) {
+      return Future.sync(() => _sliverOrWidget0);
+    }
+
     final domNodes = await compute(_parseHtml, widget.html);
     if (!mounted) {
-      return widget0;
+      return _sliverOrWidget0;
     }
 
     Timeline.startSync('Build $widget (async)');
@@ -235,6 +241,10 @@ class HtmlWidgetState extends State<HtmlWidget> {
   }
 
   Widget _buildSync() {
+    if (widget.html.isEmpty) {
+      return _sliverOrWidget0;
+    }
+
     Timeline.startSync('Build $widget (sync)');
 
     Widget built;
@@ -251,10 +261,15 @@ class HtmlWidgetState extends State<HtmlWidget> {
     return built;
   }
 
-  Widget _sliverToBoxAdapterIfNeeded(Widget child) =>
-      widget.renderMode == RenderMode.sliverList
-          ? SliverToBoxAdapter(child: child)
-          : child;
+  Widget _sliverToBoxAdapterIfNeeded(Widget child) {
+    if (widget.renderMode != RenderMode.sliverList) {
+      return child;
+    }
+
+    return child == widget0
+        ? const SliverToBoxAdapter(child: widget0)
+        : SliverToBoxAdapter(child: child);
+  }
 
   Widget _wrapper(Widget child) =>
       _RootWidget(resolved: _rootProperties, child: child);
@@ -302,7 +317,8 @@ Widget _buildBody(HtmlWidgetState state, dom.NodeList domNodes) {
   final rootTree = state._rootTree;
   rootTree.addBitsFromNodes(domNodes);
 
-  final built = rootTree.build()?.wrapWith(wf.buildBodyWidget) ?? widget0;
+  final built =
+      rootTree.build()?.wrapWith(wf.buildBodyWidget) ?? state._sliverOrWidget0;
 
   _logger.fine('Built body successfuly.');
 

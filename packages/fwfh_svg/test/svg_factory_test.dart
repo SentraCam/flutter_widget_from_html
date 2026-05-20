@@ -377,7 +377,7 @@ class _Golden extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext _) => Scaffold(
+  Widget build(BuildContext context) => Scaffold(
         body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: HtmlWidget(
@@ -402,6 +402,7 @@ class _GoldenDisallowFactory extends WidgetFactory with SvgFactory {
 
 class _MockHttpClient extends Mock implements HttpClient {
   @override
+  // suppress lint for tests
   // ignore: avoid_setters_without_getters
   set autoUncompress(bool _) {}
 }
@@ -446,13 +447,15 @@ HttpClient _createMockSvgImageHttpClient() {
     ),
   ).thenAnswer((invocation) {
     final onData =
-        invocation.positionalArguments[0] as void Function(List<int>);
+        invocation.positionalArguments[0] as void Function(List<int> data);
     final onDone =
         invocation.namedArguments[const Symbol('onDone')] as Function?;
     return Stream.fromIterable(<List<int>>[redTriangleBytes])
         .listen((data) async {
       await Future.delayed(const Duration(milliseconds: 10));
       onData(data);
+
+      // suppress lint for tests
       // ignore: avoid_dynamic_calls
       onDone?.call();
     });
